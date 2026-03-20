@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}{{ group.name }} - CodeArena{% endblock %}
+{% block content %}
+<section class="hero-shell my-4">
+  <h1 class="display-6 fw-bold">{{ group.name }}</h1>
+  <p class="text-muted-soft mb-0">{{ group.description|default:'Private hub for team contests, study accountability, and practice ladders.' }}</p>
+</section>
+<section class="row g-4 my-4">
+  <div class="col-lg-5"><div class="app-card h-100"><h3>Members</h3>{% for membership in members %}<div class="py-3 border-bottom d-flex justify-content-between"><span>{{ membership.user.username }}</span><small class="text-muted-soft">{{ membership.get_role_display }}</small></div>{% endfor %}</div></div>
+  <div class="col-lg-7"><div class="app-card h-100"><h3>Group Snapshot</h3><div class="mini-list"><div class="mini-list-item"><span>Owner</span><strong>{{ group.owner.username }}</strong></div><div class="mini-list-item"><span>Privacy</span><strong>{{ group.get_privacy_display }}</strong></div><div class="mini-list-item"><span>Members</span><strong>{{ member_count }}</strong></div><div class="mini-list-item"><span>Created</span><strong>{{ group.created_at|date:'M d, Y' }}</strong></div></div></div></div>
+</section>
+{% endblock %}

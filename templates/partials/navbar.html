@@ -1,0 +1,56 @@
+<nav class="navbar navbar-expand-xl glass-panel rounded-5 px-4 py-3 main-navbar">
+  <a class="navbar-brand brand-font" href="{% url 'dashboard:landing' %}">CodeArena</a>
+  <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="mainNav">
+    <ul class="navbar-nav ms-auto align-items-xl-center gap-xl-2">
+      <li class="nav-item"><a class="nav-link" href="{% url 'dashboard:landing' %}">Home</a></li>
+      {% if request.user.is_authenticated %}
+        <li class="nav-item"><a class="nav-link" href="{% url 'dashboard:dashboard' %}">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'friends:index' %}">Friends</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'groups:index' %}">Groups</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'challenges:index' %}">Challenges</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'contests:index' %}">Contests</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'revision:index' %}">Revision</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'ranking:index' %}">Leaderboard</a></li>
+        <li class="nav-item dropdown ms-xl-2">
+          <button class="nav-profile-button" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Profile menu">
+            {% if request.user.avatar %}
+              <img src="{{ request.user.avatar.url }}" alt="{{ request.user.username }}" class="nav-avatar-image">
+            {% else %}
+              <span class="nav-avatar-fallback">{{ request.user.username|first|upper }}</span>
+            {% endif %}
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end nav-profile-menu border-0 shadow-lg">
+            <li class="px-3 pt-2 pb-1">
+              <div class="fw-semibold">{{ request.user.username }}</div>
+              <div class="text-muted-soft small">{{ request.user.email }}</div>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="{% url 'profiles:detail' request.user.username %}"><i class="bi bi-person me-2"></i>View Profile</a></li>
+            <li><a class="dropdown-item" href="{% url 'profiles:edit' request.user.username %}"><i class="bi bi-pencil-square me-2"></i>Edit Profile</a></li>
+            <li><a class="dropdown-item" href="{% url 'dashboard:dashboard' %}"><i class="bi bi-grid me-2"></i>Dashboard</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li class="px-2 pb-2">
+              <form method="post" action="{% url 'users:logout' %}" class="m-0">
+                {% csrf_token %}
+                <button class="dropdown-item dropdown-submit text-danger w-100 text-start" type="submit">
+                  <i class="bi bi-box-arrow-right me-2"></i>Logout
+                </button>
+              </form>
+            </li>
+          </ul>
+        </li>
+      {% else %}
+        <li class="nav-item"><a class="nav-link" href="{% url 'users:login' %}">Login</a></li>
+        <li class="nav-item"><a class="btn btn-dark rounded-pill px-3" href="{% url 'users:register' %}">Create Account</a></li>
+      {% endif %}
+      <li class="nav-item ms-xl-2">
+        <button class="nav-icon-toggle" data-theme-toggle aria-label="Toggle theme">
+          <i class="bi bi-circle-half"></i>
+        </button>
+      </li>
+    </ul>
+  </div>
+</nav>

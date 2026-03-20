@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}Add Solved Problem · CodeArena{% endblock %}
+{% block content %}
+<section class="add-solved-shell my-4 animated-rise">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="app-card p-4 p-md-5">
+        <div class="mb-4">
+          <span class="soft-badge mb-3 d-inline-block">Manual Entry</span>
+          <h1 class="display-6 fw-bold mb-2">Record a Solved Problem</h1>
+          <p class="text-muted-soft mb-0">Add your latest success to your profile and automatically schedule it for revision.</p>
+        </div>
+        
+        <form method="post" class="row g-4">
+          {% csrf_token %}
+          
+          <div class="col-12">
+            <label class="form-label fw-semibold" for="{{ form.title.id_for_label }}">Problem Title</label>
+            {{ form.title }}
+            {% if form.title.errors %}<div class="text-danger small mt-1">{{ form.title.errors }}</div>{% endif %}
+          </div>
+          
+          <div class="col-12">
+            <label class="form-label fw-semibold" for="{{ form.statement.id_for_label }}">Description / Statement</label>
+            {{ form.statement }}
+            <div class="form-text">Briefly describe the problem or the core logic required.</div>
+            {% if form.statement.errors %}<div class="text-danger small mt-1">{{ form.statement.errors }}</div>{% endif %}
+          </div>
+          
+          <div class="col-md-6">
+            <label class="form-label fw-semibold" for="{{ form.url.id_for_label }}">Problem Link (URL)</label>
+            {{ form.url }}
+            {% if form.url.errors %}<div class="text-danger small mt-1">{{ form.url.errors }}</div>{% endif %}
+          </div>
+          
+          <div class="col-md-6">
+            <label class="form-label fw-semibold" for="{{ form.difficulty.id_for_label }}">Difficulty</label>
+            {{ form.difficulty }}
+            {% if form.difficulty.errors %}<div class="text-danger small mt-1">{{ form.difficulty.errors }}</div>{% endif %}
+          </div>
+          
+          <div class="col-12">
+            <label class="form-label fw-semibold" for="{{ form.notes.id_for_label }}">Solution Notes & Approach</label>
+            {{ form.notes }}
+            <div class="form-text">Your specific implementation notes for better revision later.</div>
+            {% if form.notes.errors %}<div class="text-danger small mt-1">{{ form.notes.errors }}</div>{% endif %}
+          </div>
+          
+          <div class="col-12">
+            <label class="form-label fw-semibold" for="{{ form.tags.id_for_label }}">Tags & Topics</label>
+            {{ form.tags }}
+            <div class="form-text">Hold Ctrl (or Cmd) to select multiple tags.</div>
+            {% if form.tags.errors %}<div class="text-danger small mt-1">{{ form.tags.errors }}</div>{% endif %}
+          </div>
+          
+          <div class="col-12 d-flex gap-3 pt-3">
+            <button type="submit" class="btn btn-dark btn-lg rounded-pill px-5">Add to Profile</button>
+            <a href="{% url 'dashboard:dashboard' %}" class="btn btn-outline-dark btn-lg rounded-pill px-4">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

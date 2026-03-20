@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Login · CodeArena{% endblock %}
+{% block content %}
+<section class="auth-shell my-4 animated-rise">
+  <div class="row g-4 align-items-stretch auth-card-shell">
+    <div class="col-lg-6">
+      <div class="auth-side-panel h-100">
+        <span class="eyebrow-pill mb-4"><i class="bi bi-lightning-charge"></i> Code with clarity</span>
+        <h1 class="hero-display auth-display mb-4">Back to your coding rhythm.</h1>
+        <p class="hero-copy">Sign in to continue your streak, review overdue questions, and jump straight into contests, challenges, and revision.</p>
+        <div class="auth-badge-row mt-4">
+          <span class="metric-pill"><i class="bi bi-trophy"></i> Live rankings</span>
+          <span class="metric-pill"><i class="bi bi-people"></i> Social practice</span>
+        </div>
+        <div class="auth-list mt-5">
+          <div class="auth-list-item"><i class="bi bi-check2-circle"></i><span>Track solved problems across platforms</span></div>
+          <div class="auth-list-item"><i class="bi bi-check2-circle"></i><span>Return to due revision items instantly</span></div>
+          <div class="auth-list-item"><i class="bi bi-check2-circle"></i><span>Resume your contest, challenge, and revision flow instantly</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="auth-form-panel h-100">
+        <span class="soft-badge mb-3 d-inline-block">Welcome Back</span>
+        <h2 class="section-title mb-2">Sign in to keep your streak alive.</h2>
+        <p class="text-muted-soft mb-4">Use your account email and password to continue where you left off.</p>
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger rounded-4">{{ form.non_field_errors }}</div>
+        {% endif %}
+        <form method="post" class="auth-form-grid">
+          {% csrf_token %}
+          <div>
+            <label class="form-label" for="id_username">Email</label>
+            {{ form.username }}
+            {% if form.username.errors %}<div class="text-danger small mt-2">{{ form.username.errors|join:', ' }}</div>{% endif %}
+          </div>
+          <div>
+            <label class="form-label" for="id_password">Password</label>
+            {{ form.password }}
+            {% if form.password.errors %}<div class="text-danger small mt-2">{{ form.password.errors|join:', ' }}</div>{% endif %}
+          </div>
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 pt-2">
+            <button class="btn btn-dark btn-lg rounded-pill px-4" type="submit">Login</button>
+            <a href="{% url 'users:register' %}" class="hero-soft-link">Need an account? Create one</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

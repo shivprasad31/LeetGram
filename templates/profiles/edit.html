@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block title %}Edit Profile - {{ request.user.username }}{% endblock %}
+{% block content %}
+<section class="profile-edit-shell my-4 animated-rise">
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="profile-section-card profile-edit-form">
+        <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+          <div>
+            <span class="soft-badge mb-3 d-inline-block">Edit Profile</span>
+            <h1 class="section-title mb-2">Update your public coding identity.</h1>
+            <p class="text-muted-soft mb-0">Add the links and handles that make your profile feel complete. This replaces the old settings flow.</p>
+          </div>
+          <a class="btn btn-outline-dark rounded-pill" href="{% url 'profiles:detail' request.user.username %}">Back to profile</a>
+        </div>
+        <form method="post" enctype="multipart/form-data" class="row g-3">
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+            <div class="col-12"><div class="alert alert-danger rounded-4 mb-0">{{ form.non_field_errors }}</div></div>
+          {% endif %}
+          <div class="col-md-6">
+            <label class="form-label" for="id_avatar">Avatar</label>
+            {{ form.avatar }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="id_username">Username</label>
+            {{ form.username }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="id_email">Email</label>
+            {{ form.email }}
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="id_bio">Bio</label>
+            {{ form.bio }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="id_github">GitHub</label>
+            {{ form.github }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="id_linkedin">LinkedIn</label>
+            {{ form.linkedin }}
+          </div>
+          <div class="col-12 d-flex flex-wrap gap-3 pt-2">
+            <button class="btn btn-dark btn-lg rounded-pill px-4" type="submit">Save Changes</button>
+            <a class="btn btn-outline-dark btn-lg rounded-pill px-4" href="{% url 'profiles:detail' request.user.username %}">Cancel</a>
+          </div>
+        </form>
+      </div>
+
+    </div>
+
+    <div class="col-lg-4">
+      <div class="profile-hero-card h-100">
+        <div class="editorial-kicker mb-3">Profile preview</div>
+        {% if request.user.avatar %}
+          <img src="{{ request.user.avatar.url }}" class="profile-avatar-xl mb-4" alt="{{ request.user.username }}">
+        {% else %}
+          <div class="profile-avatar-xl profile-avatar-fallback mb-4">{{ request.user.username|first|upper }}</div>
+        {% endif %}
+        <h2 class="h3 mb-1">{{ request.user.username }}</h2>
+        <p class="text-muted-soft mb-4">{{ request.user.bio|default:'Use the form to add your bio, links, and external coding handles.' }}</p>
+        <div class="profile-metric-grid mb-4">
+          <div class="analytics-card"><span class="text-muted-soft small">Rating</span><strong>{{ request.user.rating }}</strong></div>
+          <div class="analytics-card"><span class="text-muted-soft small">Solved</span><strong>{{ request.user.solved_count }}</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

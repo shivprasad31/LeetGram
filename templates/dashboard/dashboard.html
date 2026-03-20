@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard · CodeArena{% endblock %}
+{% block content %}
+<section class="hero-shell my-4 animated-rise">
+  <div class="row align-items-center g-4">
+    <div class="col-lg-8">
+      <span class="soft-badge mb-3 d-inline-block">Personal Command Center</span>
+      <h1 class="display-5 fw-bold mb-3">{{ request.user.username }}, your next best move is already queued.</h1>
+      <p class="text-muted-soft mb-3">Track momentum, review weak areas, and jump straight into the next contest or duel without context switching.</p>
+      <a href="{% url 'problems:add-solved' %}" class="btn btn-dark rounded-pill px-4 py-2"><i class="bi bi-plus-circle me-2"></i>Add Solved Problem</a>
+    </div>
+    <div class="col-lg-4">
+      <div class="metric-pill mb-2"><i class="bi bi-trophy"></i> Global Rank: {{ global_position|default:'Unranked' }}</div>
+      <div class="metric-pill mb-2"><i class="bi bi-lightning-charge"></i> Streak: {{ request.user.streak }} days</div>
+      <div class="metric-pill"><i class="bi bi-stars"></i> Rating: {{ request.user.rating }}</div>
+    </div>
+  </div>
+</section>
+
+<section class="stat-grid my-4">
+  <div class="app-card"><div class="text-muted-soft small">Total Score</div><div class="stat-value" data-counter="{{ score_breakdown.score }}">0</div></div>
+  <div class="app-card"><div class="text-muted-soft small">Challenges Won</div><div class="stat-value" data-counter="{{ score_breakdown.challenges_won }}">0</div></div>
+  <div class="app-card"><div class="text-muted-soft small">Contest Points</div><div class="stat-value" data-counter="{{ score_breakdown.contest_points }}">0</div></div>
+  <div class="app-card"><div class="text-muted-soft small">Solved Points</div><div class="stat-value" data-counter="{{ score_breakdown.solved_points }}">0</div></div>
+</section>
+
+<section class="row g-4 my-4">
+  <div class="col-lg-7">
+    <div class="app-card h-100">
+      <h2 class="section-title">Recommended Problems</h2>
+      <p class="text-muted-soft">Heuristic recommendations based on your solved-tag history.</p>
+      <canvas id="recommendationChart" height="180"></canvas>
+      {{ chart_labels|json_script:"chart-labels-data" }}
+      {{ chart_values|json_script:"chart-values-data" }}
+      <div class="mt-4">
+        {% for problem in recommended_problems %}
+          <div class="d-flex justify-content-between align-items-center py-3 border-top">
+            <div>
+              <a href="{% url 'problems:detail' problem.slug %}" class="fw-semibold text-decoration-none">{{ problem.title }}</a>
+              <div class="small text-muted-soft">{{ problem.platform|title }} · {{ problem.difficulty.name }}</div>
+            </div>
+            <span class="soft-badge">{{ problem.points }} pts</span>
+          </div>
+        {% empty %}
+          <p class="text-muted-soft mb-0">Add your solved problems to unlock tailored recommendations.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="app-card mb-4">
+      <h3 class="mb-3">Active Challenges</h3>
+      {% for challenge in active_challenges %}
+        <div class="py-2 border-bottom">
+          <div class="fw-semibold">{{ challenge.sender.username }} challenged you</div>
+          <small class="text-muted-soft">{{ challenge.time_limit_minutes }} mins · {{ challenge.get_status_display }}</small>
+        </div>
+      {% empty %}
+        <p class="text-muted-soft mb-0">No active challenges right now.</p>
+      {% endfor %}
+    </div>
+    <div class="app-card">
+      <h3 class="mb-3">Upcoming Contests</h3>
+      {% for contest in upcoming_contests %}
+        <div class="py-2 border-bottom">
+          <a href="{% url 'contests:detail' contest.slug %}" class="fw-semibold text-decoration-none">{{ contest.title }}</a>
+          <div class="small text-muted-soft">{{ contest.start_at|date:'M d, H:i' }} · {{ contest.duration_minutes }} mins</div>
+        </div>
+      {% empty %}
+        <p class="text-muted-soft mb-0">No contests scheduled yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block extra_js %}
+<script>
+const recommendationChart = document.getElementById('recommendationChart');
+if (recommendationChart) {
+  new Chart(recommendationChart, {
+    type: 'bar',
+    data: {
+      labels: JSON.parse(document.getElementById('chart-labels-data').textContent),
+      datasets: [{
+        label: 'Recommendation Score',
+        data: JSON.parse(document.getElementById('chart-values-data').textContent),
+        borderRadius: 12,
+        backgroundColor: ['#FF6B6B', '#4ECDC4', '#FFE66D', '#FF9F6E', '#9AD1D4', '#F4D35E'],
+      }]
+    },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+  });
+}
+</script>
+{% endblock %}

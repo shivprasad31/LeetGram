@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Groups · CodeArena{% endblock %}
+{% block content %}
+<section class="my-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="section-title mb-1">Study Groups</h1>
+      <p class="text-muted-soft mb-0">Build teams for practice, accountability, and contest prep.</p>
+    </div>
+  </div>
+  <div class="row g-4">
+    {% for group in groups %}
+      <div class="col-lg-4 col-md-6">
+        <div class="app-card h-100">
+          <div class="d-flex justify-content-between align-items-start mb-3"><h3 class="mb-0">{{ group.name }}</h3><span class="soft-badge">{{ group.get_privacy_display }}</span></div>
+          <p class="text-muted-soft">{{ group.description|default:'Focused coding crew with leaderboard goals.' }}</p>
+          <div class="d-flex justify-content-between align-items-center mt-4">
+            <small class="text-muted-soft">Owner: {{ group.owner.username }}</small>
+            <a class="btn btn-outline-dark rounded-pill" href="{% url 'groups:detail' group.slug %}">Open</a>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <p class="text-muted-soft">No groups created yet.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

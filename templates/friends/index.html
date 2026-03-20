@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% block title %}Friends · CodeArena{% endblock %}
+{% block content %}
+<section class="friends-page my-4 animated-rise">
+  <div class="app-card mb-4">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4">
+      <div>
+        <span class="soft-badge mb-3 d-inline-block">Social graph</span>
+        <h1 class="section-title mb-2">Find students and grow your coding circle.</h1>
+        <p class="text-muted-soft mb-0">Search by username, email, or bio and send a friend request directly from the directory.</p>
+      </div>
+      <form method="get" class="friends-search-form">
+        <input type="search" name="q" value="{{ search_query }}" class="form-control form-control-lg rounded-pill app-input" placeholder="Search students by username or bio">
+        <button class="btn btn-dark rounded-pill px-4" type="submit">Search</button>
+      </form>
+    </div>
+
+    <div class="row g-4">
+      {% for entry in discoverable_students %}
+        <div class="col-md-6 col-xl-4">
+          <div class="student-card h-100">
+            <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+              <div class="d-flex align-items-center gap-3 min-w-0">
+                {% if entry.student.avatar %}
+                  <img src="{{ entry.student.avatar.url }}" alt="{{ entry.student.username }}" class="student-avatar">
+                {% else %}
+                  <div class="student-avatar student-avatar-fallback">{{ entry.student.username|first|upper }}</div>
+                {% endif %}
+                <div class="min-w-0">
+                  <div class="fw-semibold text-truncate">{{ entry.student.username }}</div>
+                  <div class="text-muted-soft small text-truncate">Global</div>
+                </div>
+              </div>
+              <span class="soft-badge">{{ entry.student.rating }}</span>
+            </div>
+
+            <p class="text-muted-soft small mb-3">{{ entry.student.bio|default:'Building coding momentum through problem solving, contests, and revision.'|truncatechars:110 }}</p>
+
+            <div class="d-flex flex-wrap gap-2 mb-3">
+              <span class="metric-pill small"><i class="bi bi-check2-circle"></i> {{ entry.student.solved_count }} solved</span>
+              <span class="metric-pill small"><i class="bi bi-lightning"></i> {{ entry.student.streak }} streak</span>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 mt-auto">
+              <a class="btn btn-outline-dark rounded-pill" href="{% url 'profiles:detail' entry.student.username %}">View Profile</a>
+
+              {% if entry.is_friend %}
+                <form method="post" class="d-inline-flex">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="remove_friend">
+                  <input type="hidden" name="friend_id" value="{{ entry.student.id }}">
+                  <button class="btn btn-light rounded-pill" type="submit">Friends</button>
+                </form>
+              {% elif entry.pending_sent %}
+                <form method="post" class="d-inline-flex">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="cancel_request">
+                  <input type="hidden" name="request_id" value="{{ entry.pending_sent.id }}">
+                  <button class="btn btn-light rounded-pill" type="submit">Cancel Request</button>
+                </form>
+              {% elif entry.pending_received %}
+                <form method="post" class="d-inline-flex">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="accept_request">
+                  <input type="hidden" name="request_id" value="{{ entry.pending_received.id }}">
+                  <button class="btn btn-dark rounded-pill" type="submit">Accept Request</button>
+                </form>
+              {% else %}
+                <form method="post" class="d-inline-flex">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="send_request">
+                  <input type="hidden" name="receiver_id" value="{{ entry.student.id }}">
+                  <button class="btn btn-dark rounded-pill" type="submit">Send Request</button>
+                </form>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <div class="col-12">
+          <div class="profile-section-card text-center py-5">
+            <div class="feature-icon mx-auto mb-3"><i class="bi bi-search"></i></div>
+            <h2 class="h4 mb-2">No students found</h2>
+            <p class="text-muted-soft mb-0">Try a different keyword or clear the search to browse the platform directory.</p>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-xl-4">
+      <div class="app-card h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 class="h4 mb-0">Incoming Requests</h2>
+          <span class="soft-badge">{{ pending_received|length }}</span>
+        </div>
+        {% for request in pending_received %}
+          <div class="friend-list-item">
+            <div>
+              <div class="fw-semibold">{{ request.sender.username }}</div>
+              <small class="text-muted-soft">{{ request.message|default:'Wants to connect and practice together.' }}</small>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+              <form method="post" class="d-inline-flex">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="accept_request">
+                <input type="hidden" name="request_id" value="{{ request.id }}">
+                <button class="btn btn-dark btn-sm rounded-pill px-3" type="submit">Accept</button>
+              </form>
+              <form method="post" class="d-inline-flex">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="decline_request">
+                <input type="hidden" name="request_id" value="{{ request.id }}">
+                <button class="btn btn-outline-dark btn-sm rounded-pill px-3" type="submit">Decline</button>
+              </form>
+            </div>
+          </div>
+        {% empty %}
+          <p class="text-muted-soft mb-0">No incoming requests right now.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="col-xl-4">
+      <div class="app-card h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 class="h4 mb-0">Friends</h2>
+          <span class="soft-badge">{{ friend_entries|length }}</span>
+        </div>
+        {% for entry in friend_entries %}
+          <div class="friend-list-item">
+            <div>
+              <div class="fw-semibold">{{ entry.friend.username }}</div>
+              <small class="text-muted-soft">Rating {{ entry.friend.rating }}</small>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+              <a class="btn btn-outline-dark btn-sm rounded-pill px-3" href="{% url 'profiles:detail' entry.friend.username %}">Profile</a>
+              <form method="post" class="d-inline-flex">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="remove_friend">
+                <input type="hidden" name="friend_id" value="{{ entry.friend.id }}">
+                <button class="btn btn-light btn-sm rounded-pill px-3" type="submit">Remove</button>
+              </form>
+            </div>
+          </div>
+        {% empty %}
+          <p class="text-muted-soft mb-0">No friends added yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="col-xl-4">
+      <div class="app-card h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 class="h4 mb-0">Sent Requests</h2>
+          <span class="soft-badge">{{ pending_sent|length }}</span>
+        </div>
+        {% for request in pending_sent %}
+          <div class="friend-list-item">
+            <div>
+              <div class="fw-semibold">{{ request.receiver.username }}</div>
+              <small class="text-muted-soft">Waiting for response</small>
+            </div>
+            <form method="post" class="d-inline-flex">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="cancel_request">
+              <input type="hidden" name="request_id" value="{{ request.id }}">
+              <button class="btn btn-outline-dark btn-sm rounded-pill px-3" type="submit">Cancel</button>
+            </form>
+          </div>
+        {% empty %}
+          <p class="text-muted-soft mb-0">No pending sent requests.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

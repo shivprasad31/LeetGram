@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LeetGram Sync</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main class="popup-shell">
+    <h1>LeetGram LeetCode Sync</h1>
+    <p class="lead">Generate the token from your signed-in LeetGram profile page, then paste it here once.</p>
+
+    <label>
+      Backend URL
+      <input id="backendBaseUrl" type="url" placeholder="http://127.0.0.1:8000">
+    </label>
+
+    <label>
+      Extension Token
+      <input id="apiToken" type="text" placeholder="Paste the token from LeetGram">
+    </label>
+
+    <button id="saveButton" class="primary">Save Extension Setup</button>
+
+    <div id="status" class="status" role="status"></div>
+    <p class="hint">Open your LeetGram profile edit page, use the LeetCode Extension section to generate the token, then come back here and save it.</p>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>

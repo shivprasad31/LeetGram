@@ -1,0 +1,263 @@
+﻿python : Traceback 
+(most recent call 
+last):
+At line:1 char:31
++ ... \Activate.ps1; 
+python manage.py 
+makemigrations > 
+out.txt 2>&1; cat ou 
+...
++                    ~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (Traceback    
+ (most recent call    
+ last)::String) [    
+], RemoteExceptio    n
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+  File "S:\Projects\Le
+etGram\manage.py", 
+line 22, in <module>
+    main()
+    ~~~~^^
+  File "S:\Projects\Le
+etGram\manage.py", 
+line 18, in main
+    execute_from_comma
+nd_line(sys.argv)
+    ~~~~~~~~~~~~~~~~~~
+~~~~~~~^^^^^^^^^^
+  File "S:\Projects\Le
+etGram\.venv\Lib\site-
+packages\django\core\m
+anagement\__init__.py"
+, line 443, in execute
+_from_command_line
+    utility.execute()
+    ~~~~~~~~~~~~~~~^^
+  File "S:\Projects\Le
+etGram\.venv\Lib\site-
+packages\django\core\m
+anagement\__init__.py"
+, line 437, in execute
+    self.fetch_command
+(subcommand).run_from_
+argv(self.argv)
+    ~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~^^^^^^^^^^^
+  File "S:\Projects\Le
+etGram\.venv\Lib\site-
+packages\django\core\m
+anagement\base.py", 
+line 420, in 
+run_from_argv
+    
+self.execute(*args, 
+**cmd_options)
+    ~~~~~~~~~~~~^^^^^^
+^^^^^^^^^^^^^^^^
+  File "S:\Projects\Le
+etGram\.venv\Lib\site-
+packages\django\core\m
+anagement\base.py", 
+line 461, in execute
+    self.check(**check
+_kwargs)
+    ~~~~~~~~~~^^^^^^^^
+^^^^^^^^
+  File "S:\Projects\Le
+etGram\.venv\Lib\site-
+packages\django\core\m
+anagement\base.py", 
+line 496, in check
+    all_issues = 
+checks.run_checks(
+        app_configs=ap
+p_configs,
+    ...<2 lines>...
+        
+databases=databases,
+    )
+  File "S:\Projects\Le
+etGram\.venv\Lib\site-
+packages\django\core\c
+hecks\registry.py", 
+line 89, in run_checks
+    new_errors = check
+(app_configs=app_confi
+gs, 
+databases=databases)
+  File "S:\Projects\Le
+etGram\.venv\Lib\site-
+packages\django\core\c
+hecks\urls.py", line 
+16, in 
+check_url_config
+    return check_resol
+ver(resolver)
+  File "S:\Projects\Le
+etGram\.venv\Lib\site-
+packages\django\core\c
+hecks\urls.py", line 
+26, in check_resolver
+    return 
+check_method()
+  File "S:\Projects\Le
+etGram\.venv\Lib\site-
+packages\django\urls\r
+esolvers.py", line 
+541, in check
+    for pattern in 
+self.url_patterns:
+                   
+^^^^^^^^^^^^^^^^^
+  File "S:\Projects\Le
+etGram\.venv\Lib\site-
+packages\django\utils\
+functional.py", line 
+47, in __get__
+    res = instance.__d
+ict__[self.name] = 
+self.func(instance)
+                      
+                   
+~~~~~~~~~^^^^^^^^^^
+  File "S:\Projects\Le
+etGram\.venv\Lib\site-
+packages\django\urls\r
+esolvers.py", line 
+729, in url_patterns
+    patterns = getattr
+(self.urlconf_module, 
+"urlpatterns", 
+self.urlconf_module)
+                      
+ ^^^^^^^^^^^^^^^^^^^
+  File "S:\Projects\Le
+etGram\.venv\Lib\site-
+packages\django\utils\
+functional.py", line 
+47, in __get__
+    res = instance.__d
+ict__[self.name] = 
+self.func(instance)
+                      
+                   
+~~~~~~~~~^^^^^^^^^^
+  File "S:\Projects\Le
+etGram\.venv\Lib\site-
+packages\django\urls\r
+esolvers.py", line 
+722, in urlconf_module
+    return import_modu
+le(self.urlconf_name)
+  File "C:\Users\shivp
+rasad\AppData\Local\Pr
+ograms\Python\Python31
+3\Lib\importlib\__init
+__.py", line 88, in 
+import_module
+    return _bootstrap.
+_gcd_import(name[level
+:], package, level)
+           ~~~~~~~~~~~
+~~~~~~~~~~~^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^
+  File "<frozen import
+lib._bootstrap>", 
+line 1387, in 
+_gcd_import
+  File "<frozen import
+lib._bootstrap>", 
+line 1360, in 
+_find_and_load
+  File "<frozen import
+lib._bootstrap>", 
+line 1331, in _find_an
+d_load_unlocked
+  File "<frozen import
+lib._bootstrap>", 
+line 935, in 
+_load_unlocked
+  File "<frozen import
+lib._bootstrap_externa
+l>", line 1026, in 
+exec_module
+  File "<frozen import
+lib._bootstrap>", 
+line 488, in _call_wit
+h_frames_removed
+  File "S:\Projects\Le
+etGram\codearena\urls.
+py", line 9, in 
+<module>
+    path("accounts/", 
+include("users.urls"))
+,
+                      
+~~~~~~~^^^^^^^^^^^^^^
+  File "S:\Projects\Le
+etGram\.venv\Lib\site-
+packages\django\urls\c
+onf.py", line 39, in 
+include
+    urlconf_module = i
+mport_module(urlconf_m
+odule)
+  File "C:\Users\shivp
+rasad\AppData\Local\Pr
+ograms\Python\Python31
+3\Lib\importlib\__init
+__.py", line 88, in 
+import_module
+    return _bootstrap.
+_gcd_import(name[level
+:], package, level)
+           ~~~~~~~~~~~
+~~~~~~~~~~~^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^
+  File "<frozen import
+lib._bootstrap>", 
+line 1387, in 
+_gcd_import
+  File "<frozen import
+lib._bootstrap>", 
+line 1360, in 
+_find_and_load
+  File "<frozen import
+lib._bootstrap>", 
+line 1331, in _find_an
+d_load_unlocked
+  File "<frozen import
+lib._bootstrap>", 
+line 935, in 
+_load_unlocked
+  File "<frozen import
+lib._bootstrap_externa
+l>", line 1026, in 
+exec_module
+  File "<frozen import
+lib._bootstrap>", 
+line 488, in _call_wit
+h_frames_removed
+  File "S:\Projects\Le
+etGram\users\urls.py",
+ line 3, in <module>
+    from .views 
+import LoginView, 
+LogoutView, 
+RegisterView, 
+VerifyCodeView
+ImportError: cannot 
+import name 
+'VerifyCodeView' from 
+'users.views' (S:\Proj
+ects\LeetGram\users\vi
+ews.py)

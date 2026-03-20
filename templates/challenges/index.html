@@ -1,0 +1,22 @@
+﻿{% extends 'base.html' %}
+{% block title %}Challenges · CodeArena{% endblock %}
+{% block content %}
+<section class="my-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div><h1 class="section-title mb-1">Challenge Arena</h1><p class="text-muted-soft mb-0">Revision-style duels based on shared solved problems.</p></div>
+  </div>
+  <div class="row g-4">
+    {% for challenge in challenges %}
+      <div class="col-lg-4 col-md-6">
+        <div class="app-card h-100">
+          <div class="d-flex justify-content-between align-items-start"><h3 class="mb-0">{{ challenge.sender.username }} vs {{ challenge.receiver.username }}</h3><span class="soft-badge">{{ challenge.get_status_display }}</span></div>
+          <p class="text-muted-soft mt-3">{{ challenge.time_limit_minutes }} minute duel{% if challenge.difficulty %} · {{ challenge.difficulty.name }}{% endif %}</p>
+          <div class="mt-3">{% for item in challenge.challenge_problems.all %}<div class="py-2 border-top">{{ item.position }}. {{ item.problem.title }}</div>{% endfor %}</div>
+        </div>
+      </div>
+    {% empty %}
+      <p class="text-muted-soft">No challenges yet.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

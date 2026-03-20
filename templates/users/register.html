@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Register · CodeArena{% endblock %}
+{% block content %}
+<section class="auth-shell my-4 animated-rise">
+  <div class="row g-4 align-items-stretch auth-card-shell">
+    <div class="col-lg-5">
+      <div class="auth-side-panel h-100 auth-side-panel-warm">
+        <span class="eyebrow-pill mb-4"><i class="bi bi-stars"></i> Start building your arena</span>
+        <h1 class="hero-display auth-display mb-4">Create a profile that grows with your progress.</h1>
+        <p class="hero-copy">Join a social coding workspace where contests, revision, rankings, and challenge history all compound into better habits.</p>
+        <div class="auth-metric-grid mt-5">
+          <div class="soft-stat-card"><span class="text-muted-soft small">Challenges</span><strong>1v1</strong></div>
+          <div class="soft-stat-card"><span class="text-muted-soft small">Revision</span><strong>Smart</strong></div>
+          <div class="soft-stat-card"><span class="text-muted-soft small">Contests</span><strong>Solo + Team</strong></div>
+          <div class="soft-stat-card"><span class="text-muted-soft small">Profiles</span><strong>Synced</strong></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-7">
+      <div class="auth-form-panel h-100">
+        <span class="soft-badge mb-3 d-inline-block">Create Account</span>
+        <h2 class="section-title mb-2">Set up your coding identity.</h2>
+        <p class="text-muted-soft mb-4">Start with the essentials. You can finish your full profile and external coding links right after signup.</p>
+        <form method="post" class="auth-form-grid auth-register-grid">
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+            <div class="auth-grid-span-full"><div class="alert alert-danger rounded-4 mb-0">{{ form.non_field_errors }}</div></div>
+          {% endif %}
+          <div>
+            <label class="form-label" for="id_username">Username</label>
+            {{ form.username }}
+            {% if form.username.errors %}<div class="text-danger small mt-2">{{ form.username.errors|join:', ' }}</div>{% endif %}
+          </div>
+          <div>
+            <label class="form-label" for="id_email">Email</label>
+            {{ form.email }}
+            {% if form.email.errors %}<div class="text-danger small mt-2">{{ form.email.errors|join:', ' }}</div>{% endif %}
+          </div>
+          <div>
+            <label class="form-label" for="id_password1">Password</label>
+            {{ form.password1 }}
+            {% if form.password1.errors %}<div class="text-danger small mt-2">{{ form.password1.errors|join:', ' }}</div>{% endif %}
+          </div>
+          <div class="auth-grid-span-full">
+            <label class="form-label" for="id_bio">Bio</label>
+            {{ form.bio }}
+            {% if form.bio.errors %}<div class="text-danger small mt-2">{{ form.bio.errors|join:', ' }}</div>{% endif %}
+          </div>
+          <div>
+            <label class="form-label" for="id_password2">Confirm Password</label>
+            {{ form.password2 }}
+            {% if form.password2.errors %}<div class="text-danger small mt-2">{{ form.password2.errors|join:', ' }}</div>{% endif %}
+          </div>
+          <div class="auth-grid-span-full d-flex flex-wrap justify-content-between align-items-center gap-3 pt-2">
+            <button class="btn btn-dark btn-lg rounded-pill px-4" type="submit">Create Account</button>
+            <a href="{% url 'users:login' %}" class="hero-soft-link">Already have an account? Login</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

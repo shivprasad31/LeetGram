@@ -1,0 +1,67 @@
+﻿version: '3.9'
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-codearena}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+
+  web:
+    build: .
+    env_file: .env.example
+    command: /app/docker/entrypoint.sh gunicorn codearena.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+
+  websocket:
+    build: .
+    env_file: .env.example
+    command: daphne -b 0.0.0.0 -p 8001 codearena.asgi:application
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+
+  worker:
+    build: .
+    env_file: .env.example
+    command: celery -A codearena worker -l info
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+
+  beat:
+    build: .
+    env_file: .env.example
+    command: celery -A codearena beat -l info
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+
+  nginx:
+    image: nginx:1.27-alpine
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - web
+      - websocket
+
+volumes:
+  postgres_data:
