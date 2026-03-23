@@ -1,4 +1,4 @@
-﻿from rest_framework import serializers
+from rest_framework import serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -29,7 +29,7 @@ class DashboardSummaryView(APIView):
                 "score_breakdown": score_breakdown_for_user(user),
                 "active_challenges": Challenge.objects.filter(receiver=user).exclude(status="finished").count(),
                 "upcoming_contests": Contest.objects.count(),
-                "recommended_problems": [problem.title for problem in recommended],
+                "recommended_problems": [problem.canonical_name for problem in recommended],
             }
         )
 

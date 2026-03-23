@@ -78,6 +78,7 @@ class FriendsPageView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         user = self.request.user
         search_query = self.request.GET.get("q", "").strip()
+        normalized_search_query = search_query.casefold()
 
         friendships = Friendship.objects.filter(Q(user_one=user) | Q(user_two=user)).select_related("user_one", "user_two")
         pending_received = FriendRequest.objects.filter(receiver=user, status="pending").select_related("sender")
@@ -101,7 +102,7 @@ class FriendsPageView(LoginRequiredMixin, TemplateView):
                 | Q(bio__icontains=search_query)
             )
 
-        student_queryset = student_queryset.order_by("-rating", "username")[:18]
+        student_queryset = student_queryset.order_by("-solved_count", "-streak", "username")
         discoverable_students = []
         for student in student_queryset:
             discoverable_students.append(
@@ -110,8 +111,23 @@ class FriendsPageView(LoginRequiredMixin, TemplateView):
                     "is_friend": student.id in friend_ids,
                     "pending_received": pending_received_map.get(student.id),
                     "pending_sent": pending_sent_map.get(student.id),
+                    "username_exact_match": bool(search_query) and student.username.casefold() == normalized_search_query,
+                    "email_exact_match": bool(search_query) and student.email.casefold() == normalized_search_query,
                 }
             )
+
+        if search_query:
+            discoverable_students.sort(
+                key=lambda entry: (
+                    not entry["username_exact_match"],
+                    not entry["email_exact_match"],
+                    -entry["student"].solved_count,
+                    -entry["student"].streak,
+                    entry["student"].username.lower(),
+                )
+            )
+
+        discoverable_students = discoverable_students[:18]
 
         context.update(
             {
@@ -120,7 +136,10 @@ class FriendsPageView(LoginRequiredMixin, TemplateView):
                 "friendships": friendships,
                 "pending_received": pending_received,
                 "pending_sent": pending_sent,
+                "pending_received_count": pending_received.count(),
+                "pending_total_count": pending_received.count() + pending_sent.count(),
                 "discoverable_students": discoverable_students,
+                "has_search_results": bool(discoverable_students),
             }
         )
         return context

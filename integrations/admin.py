@@ -1,6 +1,5 @@
-﻿from django.contrib import admin
+from django.contrib import admin
 
-from .models import ExternalProfileConnection
+from .models import IntegrationStatus
 
-admin.site.register(ExternalProfileConnection)
-
+admin.site.register(IntegrationStatus)

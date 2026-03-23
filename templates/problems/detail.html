@@ -1,18 +1,18 @@
-﻿{% extends 'base.html' %}
-{% block title %}{{ problem.title }} · CodeArena{% endblock %}
+{% extends 'base.html' %}
+{% block title %}{{ problem.canonical_name }} · CodeArena{% endblock %}
 {% block content %}
 <section class="my-4">
   <div class="app-card">
     <div class="d-flex justify-content-between align-items-start">
       <div>
-        <span class="soft-badge">{{ problem.platform|title }}</span>
-        <h1 class="section-title mt-3">{{ problem.title }}</h1>
+        <span class="soft-badge">{{ problem.platform_problems.first.platform|title|default:'Sync' }}</span>
+        <h1 class="section-title mt-3">{{ problem.canonical_name }}</h1>
       </div>
       <span class="difficulty-{{ problem.difficulty.slug }} fw-semibold">{{ problem.difficulty.name }}</span>
     </div>
     <p class="text-muted-soft">{{ problem.statement|default:'Import the canonical statement or paste your custom description here.' }}</p>
     <div class="d-flex flex-wrap gap-2 mb-4">{% for tag in problem.tags.all %}<span class="soft-badge">{{ tag.name }}</span>{% endfor %}</div>
-    {% if problem.url %}<a class="btn btn-dark rounded-pill" href="{{ problem.url }}" target="_blank" rel="noreferrer">Open Source Problem</a>{% endif %}
+    {% if problem.platform_problems.first.url %}<a class="btn btn-dark rounded-pill" href="{{ problem.platform_problems.first.url }}" target="_blank" rel="noreferrer">Open Source Problem</a>{% endif %}
   </div>
 </section>
 {% endblock %}

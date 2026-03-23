@@ -4,12 +4,12 @@
 <section class="profile-edit-shell my-4 animated-rise">
   <div class="row g-4">
     <div class="col-lg-8">
-      <div class="profile-section-card profile-edit-form">
+      <div class="profile-section-card profile-edit-form mb-4">
         <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
           <div>
             <span class="soft-badge mb-3 d-inline-block">Edit Profile</span>
             <h1 class="section-title mb-2">Update your public coding identity.</h1>
-            <p class="text-muted-soft mb-0">Add the links and handles that make your profile feel complete. This replaces the old settings flow.</p>
+            <p class="text-muted-soft mb-0">Add the links and handles that make your profile feel complete.</p>
           </div>
           <a class="btn btn-outline-dark rounded-pill" href="{% url 'profiles:detail' request.user.username %}">Back to profile</a>
         </div>
@@ -49,6 +49,63 @@
         </form>
       </div>
 
+      <div class="profile-section-card" id="connected-profiles-card">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+          <div>
+            <span class="soft-badge mb-3 d-inline-block">Connected Profiles</span>
+            <h2 class="section-title mb-2">Keep your competitive history in sync.</h2>
+            <p class="text-muted-soft mb-0">Store only public usernames or handles. Passwords and private tokens are never saved here.</p>
+          </div>
+          <div class="text-md-end">
+            <div class="small text-muted-soft">Last synced</div>
+            <strong id="last-synced-label">{% if request.user.last_synced_at %}{{ request.user.last_synced_at|date:'M d, Y h:i A' }}{% else %}Never{% endif %}</strong>
+          </div>
+        </div>
+
+        <div id="integration-feedback" class="d-none alert rounded-4"></div>
+
+        <form id="connected-profiles-form" class="row g-3">
+          {% csrf_token %}
+          {% for row in integration_rows %}
+            <div class="col-md-6">
+              <div class="integration-platform-card h-100">
+                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="fs-5"><i class="bi {{ row.icon }}"></i></span>
+                    <div>
+                      <div class="fw-semibold">{{ row.platform }}</div>
+                      <div class="small text-muted-soft">Status: <span data-status-for="{{ row.field }}">{{ row.status }}</span></div>
+                    </div>
+                  </div>
+                  <span class="badge {% if row.sync_failed %}text-bg-danger{% elif row.is_connected %}text-bg-success{% else %}text-bg-secondary{% endif %}" data-badge-for="{{ row.field }}">{{ row.status }}</span>
+                </div>
+                <label class="form-label" for="id_{{ row.field }}">{{ row.platform }} username</label>
+                <input
+                  type="text"
+                  id="id_{{ row.field }}"
+                  name="{{ row.field }}"
+                  value="{{ row.username|default:'' }}"
+                  class="form-control form-control-lg rounded-4 app-input"
+                  placeholder="{{ row.placeholder }}"
+                  autocomplete="off"
+                >
+                {% if row.error_message %}
+                  <div class="small text-danger mt-2" data-sync-error-for="{{ row.field }}">{{ row.error_message }}</div>
+                {% else %}
+                  <div class="small text-danger mt-2 d-none" data-sync-error-for="{{ row.field }}"></div>
+                {% endif %}
+                <div class="small text-danger mt-2 d-none" data-error-for="{{ row.field }}"></div>
+              </div>
+            </div>
+          {% endfor %}
+
+          <div class="col-12 d-flex flex-wrap gap-3 pt-2">
+            <button class="btn btn-outline-dark rounded-pill px-4" type="button" id="edit-integrations-btn">Edit</button>
+            <button class="btn btn-dark rounded-pill px-4" type="submit" id="save-integrations-btn">Save</button>
+            <button class="btn btn-success rounded-pill px-4" type="button" id="sync-integrations-btn">Sync Now</button>
+          </div>
+        </form>
+      </div>
     </div>
 
     <div class="col-lg-4">
@@ -62,11 +119,156 @@
         <h2 class="h3 mb-1">{{ request.user.username }}</h2>
         <p class="text-muted-soft mb-4">{{ request.user.bio|default:'Use the form to add your bio, links, and external coding handles.' }}</p>
         <div class="profile-metric-grid mb-4">
-          <div class="analytics-card"><span class="text-muted-soft small">Rating</span><strong>{{ request.user.rating }}</strong></div>
           <div class="analytics-card"><span class="text-muted-soft small">Solved</span><strong>{{ request.user.solved_count }}</strong></div>
+          <div class="analytics-card"><span class="text-muted-soft small">Streak</span><strong>{{ request.user.streak }}</strong></div>
+        </div>
+        <div class="profile-section-card integration-preview-card border-0 shadow-sm">
+          <div class="editorial-kicker mb-2">Connected status</div>
+          {% for row in integration_rows %}
+            <div class="mini-list-item">
+              <div>
+                <div class="fw-semibold">{{ row.platform }}</div>
+                <small class="text-muted-soft">{{ row.username|default:'Not connected' }}</small>
+              </div>
+              <span class="badge {% if row.is_connected %}text-bg-success{% else %}text-bg-secondary{% endif %}">{% if row.is_connected %}Connected{% else %}Not connected{% endif %}</span>
+            </div>
+          {% endfor %}
         </div>
       </div>
     </div>
   </div>
 </section>
+{% endblock %}
+{% block extra_js %}
+<script>
+  (() => {
+    const form = document.getElementById('connected-profiles-form');
+    if (!form) {
+      return;
+    }
+
+    const editButton = document.getElementById('edit-integrations-btn');
+    const saveButton = document.getElementById('save-integrations-btn');
+    const syncButton = document.getElementById('sync-integrations-btn');
+    const feedback = document.getElementById('integration-feedback');
+    const lastSyncedLabel = document.getElementById('last-synced-label');
+    const inputs = Array.from(form.querySelectorAll('input[name]'));
+
+    const showFeedback = (message, level) => {
+      feedback.className = `alert alert-${level} rounded-4`;
+      feedback.textContent = message;
+      feedback.classList.remove('d-none');
+    };
+
+    const clearErrors = () => {
+      form.querySelectorAll('[data-error-for]').forEach((node) => {
+        node.textContent = '';
+        node.classList.add('d-none');
+      });
+    };
+
+    const setEditable = (enabled) => {
+      inputs.forEach((input) => {
+        input.readOnly = !enabled;
+      });
+      saveButton.disabled = !enabled;
+    };
+
+    const refreshRows = (profiles) => {
+      profiles.forEach((profile) => {
+        const input = form.querySelector(`[name="${profile.field}"]`);
+        const status = document.querySelector(`[data-status-for="${profile.field}"]`);
+        const badge = document.querySelector(`[data-badge-for="${profile.field}"]`);
+        const syncError = document.querySelector(`[data-sync-error-for="${profile.field}"]`);
+        if (input) {
+          input.value = profile.username || '';
+        }
+        if (status) {
+          status.textContent = profile.status;
+        }
+        if (badge) {
+          badge.textContent = profile.status;
+          badge.className = `badge ${profile.sync_failed ? 'text-bg-danger' : (profile.is_connected ? 'text-bg-success' : 'text-bg-secondary')}`;
+        }
+        if (syncError) {
+          if (profile.error_message) {
+            syncError.textContent = profile.error_message;
+            syncError.classList.remove('d-none');
+          } else {
+            syncError.textContent = '';
+            syncError.classList.add('d-none');
+          }
+        }
+      });
+    };
+
+    setEditable(false);
+
+    editButton.addEventListener('click', () => {
+      setEditable(true);
+      showFeedback('Connected profile editing is enabled.', 'info');
+    });
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      clearErrors();
+      saveButton.disabled = true;
+      showFeedback('Saving connected profiles and queueing sync...', 'info');
+
+      const response = await fetch('{% url "connect-profiles" %}', {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value,
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: new FormData(form),
+      });
+
+      const payload = await response.json();
+      if (!response.ok) {
+        Object.entries(payload.errors || {}).forEach(([field, messages]) => {
+          const node = form.querySelector(`[data-error-for="${field}"]`);
+          if (node) {
+            node.textContent = messages.join(', ');
+            node.classList.remove('d-none');
+          }
+        });
+        showFeedback(payload.message || 'Could not save connected profiles.', 'danger');
+        saveButton.disabled = false;
+        return;
+      }
+
+      refreshRows(payload.profiles || []);
+      setEditable(false);
+      showFeedback(payload.message, 'success');
+      if (payload.last_synced_at) {
+        lastSyncedLabel.textContent = new Date(payload.last_synced_at).toLocaleString();
+      }
+    });
+
+    syncButton.addEventListener('click', async () => {
+      syncButton.disabled = true;
+      syncButton.textContent = 'Syncing...';
+      showFeedback('Sync requested. This may take a moment.', 'info');
+
+      const response = await fetch('{% url "sync-now" %}', {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value,
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+      });
+      const payload = await response.json();
+      showFeedback(payload.message, response.ok ? 'success' : 'danger');
+      if (response.ok) {
+        refreshRows(payload.profiles || []);
+        if (payload.last_synced_at) {
+          lastSyncedLabel.textContent = new Date(payload.last_synced_at).toLocaleString();
+        }
+      }
+      syncButton.disabled = false;
+      syncButton.textContent = 'Sync Now';
+    });
+  })();
+</script>
 {% endblock %}

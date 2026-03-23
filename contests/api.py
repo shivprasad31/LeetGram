@@ -1,4 +1,4 @@
-﻿from django.db import transaction
+from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers, viewsets
 from rest_framework.decorators import action
@@ -12,7 +12,7 @@ from .services import rebuild_contest_leaderboard, register_contest_activity
 
 
 class ContestProblemSerializer(serializers.ModelSerializer):
-    title = serializers.CharField(source="problem.title", read_only=True)
+    title = serializers.CharField(source="problem.canonical_name", read_only=True)
 
     class Meta:
         model = ContestProblem

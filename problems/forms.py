@@ -1,5 +1,5 @@
 from django import forms
-from .models import ProblemDifficulty, ProblemTag
+from .models import ProblemDifficulty, Tag
 
 class SolvedProblemForm(forms.Form):
     title = forms.CharField(
@@ -23,7 +23,7 @@ class SolvedProblemForm(forms.Form):
         widget=forms.Select(attrs={"class": "form-select rounded-4 app-input"})
     )
     tags = forms.ModelMultipleChoiceField(
-        queryset=ProblemTag.objects.all(),
+        queryset=Tag.objects.all(),
         required=False,
         widget=forms.SelectMultiple(attrs={"class": "form-select rounded-4 app-input", "size": "5"})
     )

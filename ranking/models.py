@@ -35,7 +35,6 @@ class WeeklyRanking(models.Model):
 class GlobalLeaderboard(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="global_leaderboard")
     score = models.PositiveIntegerField(default=0)
-    rating = models.PositiveIntegerField(default=0)
     total_solved = models.PositiveIntegerField(default=0)
     challenges_won = models.PositiveIntegerField(default=0)
     rank = models.PositiveIntegerField(default=0)

@@ -13,8 +13,7 @@ def score_breakdown_for_user(user):
     contest_points = ContestParticipant.objects.filter(user=user).aggregate(total=Sum("final_score"))["total"] or 0
     solved_points = user.solved_count * 2
     streak_bonus = user.streak * 5
-    rating_bonus = user.rating // 50
-    total = challenges_won * 25 + contest_points + solved_points + streak_bonus + rating_bonus
+    total = challenges_won * 25 + contest_points + solved_points + streak_bonus
     return {
         "score": total,
         "challenges_won": challenges_won,
@@ -29,14 +28,13 @@ def rebuild_global_leaderboard():
     for user in User.objects.all():
         breakdown = score_breakdown_for_user(user)
         leaders.append((breakdown["score"], user, breakdown))
-    leaders.sort(key=lambda item: (-item[0], -item[1].rating, item[1].username))
+    leaders.sort(key=lambda item: (-item[0], -item[1].solved_count, -item[1].streak, item[1].username))
 
     for index, (_, user, breakdown) in enumerate(leaders, start=1):
         GlobalLeaderboard.objects.update_or_create(
             user=user,
             defaults={
                 "score": breakdown["score"],
-                "rating": user.rating,
                 "total_solved": user.solved_count,
                 "challenges_won": breakdown["challenges_won"],
                 "rank": index,

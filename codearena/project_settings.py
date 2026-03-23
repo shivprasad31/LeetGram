@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+WINDOWS_LOCAL_REDIS = "redis://127.0.0.1:6379"
+DEFAULT_REDIS_BASE = WINDOWS_LOCAL_REDIS if os.name == "nt" else "redis://redis:6379"
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-codearena-dev-key")
 DEBUG = os.getenv("DJANGO_DEBUG", "True").lower() == "true"
@@ -37,6 +39,7 @@ INSTALLED_APPS = [
     "ranking.apps.RankingConfig",
     "notifications.apps.NotificationsConfig",
     "dashboard.apps.DashboardConfig",
+    "integrations.apps.IntegrationsConfig",
 ]
 
 MIDDLEWARE = [
@@ -144,7 +147,7 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
-REDIS_URL = os.getenv("REDIS_URL", "")
+REDIS_URL = os.getenv("REDIS_URL", f"{DEFAULT_REDIS_BASE}/1")
 if REDIS_URL:
     CACHES = {
         "default": {
@@ -173,12 +176,20 @@ else:
         }
     }
 
-CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", REDIS_URL or "redis://redis:6379/0")
-CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", REDIS_URL or "redis://redis:6379/1")
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", f"{DEFAULT_REDIS_BASE}/0")
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", f"{DEFAULT_REDIS_BASE}/2")
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
+CELERY_WORKER_POOL = os.getenv("CELERY_WORKER_POOL", "solo" if os.name == "nt" else "prefork")
+CELERY_WORKER_CONCURRENCY = int(os.getenv("CELERY_WORKER_CONCURRENCY", "1" if os.name == "nt" else "4"))
+CELERY_BEAT_SCHEDULE = {
+    "sync-recent-submissions": {
+        "task": "users.tasks.sync_recent_submissions",
+        "schedule": timedelta(minutes=5),
+    }
+}
 
 RATELIMIT_USE_CACHE = "default"
 
@@ -194,8 +205,11 @@ CODEARENA_COLORS = {
     "light": "#F7F7F7",
 }
 
-
 CELERY_TASK_ALWAYS_EAGER = DEBUG and not REDIS_URL
 CELERY_TASK_EAGER_PROPAGATES = True
 
-
+# Problem Sync System Settings
+SYNC_RATE_LIMIT = "10/m"  # 10 requests per minute per platform
+SYNC_BATCH_SIZE = 50
+SYNC_RETRY_LIMIT = 5
+SYNC_DELAY_BETWEEN_CALLS = 1.0  # seconds

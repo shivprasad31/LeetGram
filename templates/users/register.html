@@ -20,7 +20,7 @@
       <div class="auth-form-panel h-100">
         <span class="soft-badge mb-3 d-inline-block">Create Account</span>
         <h2 class="section-title mb-2">Set up your coding identity.</h2>
-        <p class="text-muted-soft mb-4">Start with the essentials. You can finish your full profile and external coding links right after signup.</p>
+        <p class="text-muted-soft mb-4">Start with the essentials, then optionally connect your coding handles now so your first sync can start immediately.</p>
         <form method="post" class="auth-form-grid auth-register-grid">
           {% csrf_token %}
           {% if form.non_field_errors %}
@@ -41,15 +41,49 @@
             {{ form.password1 }}
             {% if form.password1.errors %}<div class="text-danger small mt-2">{{ form.password1.errors|join:', ' }}</div>{% endif %}
           </div>
+          <div>
+            <label class="form-label" for="id_password2">Confirm Password</label>
+            {{ form.password2 }}
+            {% if form.password2.errors %}<div class="text-danger small mt-2">{{ form.password2.errors|join:', ' }}</div>{% endif %}
+          </div>
           <div class="auth-grid-span-full">
             <label class="form-label" for="id_bio">Bio</label>
             {{ form.bio }}
             {% if form.bio.errors %}<div class="text-danger small mt-2">{{ form.bio.errors|join:', ' }}</div>{% endif %}
           </div>
-          <div>
-            <label class="form-label" for="id_password2">Confirm Password</label>
-            {{ form.password2 }}
-            {% if form.password2.errors %}<div class="text-danger small mt-2">{{ form.password2.errors|join:', ' }}</div>{% endif %}
+          <div class="auth-grid-span-full pt-2">
+            <div class="profile-section-card border-0 shadow-sm h-100">
+              <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                <div>
+                  <div class="editorial-kicker mb-2">Optional</div>
+                  <h3 class="h4 mb-1">Connected Profiles</h3>
+                  <p class="text-muted-soft mb-0">Add the coding handles you want CodeArena to sync after signup.</p>
+                </div>
+                <span class="soft-badge">No passwords required</span>
+              </div>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label" for="id_codeforces_username">Codeforces</label>
+                  {{ form.codeforces_username }}
+                  {% if form.codeforces_username.errors %}<div class="text-danger small mt-2">{{ form.codeforces_username.errors|join:', ' }}</div>{% endif %}
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="id_leetcode_username">LeetCode</label>
+                  {{ form.leetcode_username }}
+                  {% if form.leetcode_username.errors %}<div class="text-danger small mt-2">{{ form.leetcode_username.errors|join:', ' }}</div>{% endif %}
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="id_gfg_username">GeeksforGeeks</label>
+                  {{ form.gfg_username }}
+                  {% if form.gfg_username.errors %}<div class="text-danger small mt-2">{{ form.gfg_username.errors|join:', ' }}</div>{% endif %}
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="id_hackerrank_username">HackerRank</label>
+                  {{ form.hackerrank_username }}
+                  {% if form.hackerrank_username.errors %}<div class="text-danger small mt-2">{{ form.hackerrank_username.errors|join:', ' }}</div>{% endif %}
+                </div>
+              </div>
+            </div>
           </div>
           <div class="auth-grid-span-full d-flex flex-wrap justify-content-between align-items-center gap-3 pt-2">
             <button class="btn btn-dark btn-lg rounded-pill px-4" type="submit">Create Account</button>

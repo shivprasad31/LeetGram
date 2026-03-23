@@ -7,13 +7,18 @@
     <ul class="navbar-nav ms-auto align-items-xl-center gap-xl-2">
       <li class="nav-item"><a class="nav-link" href="{% url 'dashboard:landing' %}">Home</a></li>
       {% if request.user.is_authenticated %}
-        <li class="nav-item"><a class="nav-link" href="{% url 'dashboard:dashboard' %}">Dashboard</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'friends:index' %}">Friends</a></li>
+        <li class="nav-item">
+          <a class="nav-link nav-link-with-dot" href="{% url 'friends:index' %}">
+            <span>Friends</span>
+            {% if pending_friend_requests_count %}
+              <span class="nav-notification-dot" aria-label="{{ pending_friend_requests_count }} pending friend request{% if pending_friend_requests_count != 1 %}s{% endif %}"></span>
+            {% endif %}
+          </a>
+        </li>
         <li class="nav-item"><a class="nav-link" href="{% url 'groups:index' %}">Groups</a></li>
         <li class="nav-item"><a class="nav-link" href="{% url 'challenges:index' %}">Challenges</a></li>
         <li class="nav-item"><a class="nav-link" href="{% url 'contests:index' %}">Contests</a></li>
         <li class="nav-item"><a class="nav-link" href="{% url 'revision:index' %}">Revision</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'ranking:index' %}">Leaderboard</a></li>
         <li class="nav-item dropdown ms-xl-2">
           <button class="nav-profile-button" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Profile menu">
             {% if request.user.avatar %}
@@ -30,7 +35,6 @@
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" href="{% url 'profiles:detail' request.user.username %}"><i class="bi bi-person me-2"></i>View Profile</a></li>
             <li><a class="dropdown-item" href="{% url 'profiles:edit' request.user.username %}"><i class="bi bi-pencil-square me-2"></i>Edit Profile</a></li>
-            <li><a class="dropdown-item" href="{% url 'dashboard:dashboard' %}"><i class="bi bi-grid me-2"></i>Dashboard</a></li>
             <li><hr class="dropdown-divider"></li>
             <li class="px-2 pb-2">
               <form method="post" action="{% url 'users:logout' %}" class="m-0">

@@ -4,7 +4,10 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from profiles.integrations import INTEGRATION_PLATFORMS, validate_integration_username
+
 from .models import Badge, User, UserBadge
+from .tasks import dispatch_user_sync
 
 
 class BadgeSerializer(serializers.ModelSerializer):
@@ -30,7 +33,6 @@ class UserSerializer(serializers.ModelSerializer):
             "id",
             "username",
             "email",
-            "rating",
             "rank",
             "streak",
             "solved_count",
@@ -41,8 +43,9 @@ class UserSerializer(serializers.ModelSerializer):
             "leetcode_username",
             "codeforces_username",
             "gfg_username",
+            "hackerrank_username",
+            "last_synced_at",
             "created_at",
-            "email_verified",
             "awards",
         ]
 
@@ -52,11 +55,37 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["username", "email", "password", "bio"]
+        fields = [
+            "username",
+            "email",
+            "password",
+            "bio",
+            "codeforces_username",
+            "leetcode_username",
+            "gfg_username",
+            "hackerrank_username",
+        ]
+
+    def validate(self, attrs):
+        seen = {}
+        for field_name, meta in INTEGRATION_PLATFORMS.items():
+            normalized = validate_integration_username(attrs.get(field_name), meta["label"])
+            attrs[field_name] = normalized
+            if not normalized:
+                continue
+            lookup = normalized.casefold()
+            if lookup in seen:
+                raise serializers.ValidationError(
+                    {field_name: f"This username is already used for {seen[lookup]}. Use a distinct handle per platform."}
+                )
+            seen[lookup] = meta["label"]
+        return attrs
 
     def create(self, validated_data):
         password = validated_data.pop("password")
         user = User.objects.create_user(password=password, **validated_data)
+        if user.has_connected_profiles:
+            dispatch_user_sync(user.id)
         return user
 
 
@@ -79,9 +108,9 @@ class CurrentUserView(generics.RetrieveAPIView):
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = UserSerializer
-    queryset = User.objects.all().order_by("-rating")
+    queryset = User.objects.all().order_by("-solved_count", "-streak", "username")
     search_fields = ["username", "email"]
-    ordering_fields = ["rating", "solved_count", "streak", "created_at"]
+    ordering_fields = ["solved_count", "streak", "created_at", "username"]
 
     @action(detail=False, permission_classes=[IsAuthenticated])
     def me(self, request):

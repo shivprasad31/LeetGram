@@ -4,7 +4,7 @@ from django.urls import reverse_lazy
 from django.views.generic import DetailView, FormView, ListView
 
 from .forms import SolvedProblemForm
-from .models import Problem, ProblemDifficulty, ProblemTag
+from .models import Problem, ProblemDifficulty, Tag
 from .services import create_manual_solved_problem
 
 
@@ -24,13 +24,13 @@ class ProblemListView(ListView):
         if tag:
             queryset = queryset.filter(tags__slug=tag)
         if search:
-            queryset = queryset.filter(title__icontains=search)
+            queryset = queryset.filter(canonical_name__icontains=search)
         return queryset.distinct()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["difficulties"] = ProblemDifficulty.objects.all()
-        context["tags"] = ProblemTag.objects.all()[:20]
+        context["tags"] = Tag.objects.all()[:20]
         return context
 
 

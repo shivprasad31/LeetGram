@@ -1,121 +1,90 @@
-from rest_framework import status
-from rest_framework.test import APIClient, APITestCase
-from django.urls import reverse
+from unittest.mock import patch
 
-from problems.models import Problem, UserSolvedProblem
-from users.models import User
+from django.contrib.auth import get_user_model
+from django.test import TestCase
 
-from .models import ExternalProfileConnection
+from integrations.services import GFGService, HackerRankService
+from integrations.sync import SyncService
+from problems.models import UserSolvedProblem
+from revision.models import RevisionItem
+
+User = get_user_model()
 
 
-class LeetCodeExtensionApiTests(APITestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(
-            email="extension@example.com",
-            username="extension-user",
-            password="strong-pass-123",
-        )
-        self.connection = ExternalProfileConnection.objects.create(
-            user=self.user,
-            platform="leetcode",
-            username="leetuser",
-            profile_url="https://leetcode.com/leetuser/",
-            is_active=True,
-        )
-        self.authenticated_client = APIClient()
-        self.authenticated_client.force_authenticate(user=self.user)
-
-    def accepted_payload(self):
-        return {
-            "submission_id": "123456789",
-            "status_code": 10,
-            "status_display": "Accepted",
-            "timestamp": 1710000000,
-            "runtime_ms": 52,
-            "memory_kb": 18200,
-            "lang": "python3",
-            "question": {
-                "question_id": "1",
-                "frontend_question_id": "1",
-                "title": "Two Sum",
-                "title_slug": "two-sum",
-                "difficulty": "Easy",
-                "paid_only": False,
-                "content": "<p>Given an array of integers...</p>",
-                "ac_rate": "54.2",
-                "topic_tags": [
-                    {"name": "Array", "slug": "array"},
-                    {"name": "Hash Table", "slug": "hash-table"},
-                ],
+class PlatformServiceParsingTests(TestCase):
+    def test_gfg_service_parses_submission_payload(self):
+        service = GFGService()
+        payload = {
+            "status": "success",
+            "result": {
+                "Medium": {
+                    "705001": {
+                        "slug": "find-nth-root-of-m5843",
+                        "pname": "Find nth root of m",
+                        "lang": "cpp",
+                    }
+                }
             },
         }
 
-    def test_issue_token_returns_ingest_endpoint(self):
-        response = self.authenticated_client.post(reverse("integration-issue-token", args=[self.connection.id]))
+        with patch.object(service, "_get_json", return_value=payload):
+            submissions = service.fetch_solved_submissions("demo-user")
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.connection.refresh_from_db()
-        self.assertTrue(self.connection.api_token)
-        self.assertEqual(response.data["api_token"], self.connection.api_token)
-        self.assertIn("/api/integrations/leetcode/submissions/", response.data["endpoint"])
+        self.assertEqual(len(submissions), 1)
+        self.assertEqual(submissions[0]["platform_id"], "705001")
+        self.assertEqual(submissions[0]["title"], "Find nth root of m")
+        self.assertIn("find-nth-root-of-m5843", submissions[0]["url"])
 
-    def test_submission_ingest_creates_problem_and_solved_entry(self):
-        self.connection.api_token = "extension-token"
-        self.connection.save(update_fields=["api_token"])
+    def test_hackerrank_service_parses_recent_challenges_payload(self):
+        service = HackerRankService()
+        payload = {
+            "models": [
+                {
+                    "name": "Java Singleton Pattern",
+                    "ch_slug": "java-singleton",
+                    "created_at": "2026-03-20T14:15:08.000+00:00",
+                    "url": "/challenges/java-singleton",
+                }
+            ]
+        }
 
-        response = self.client.post(
-            reverse("api-leetcode-submission"),
-            data=self.accepted_payload(),
-            format="json",
-            HTTP_X_LEETGRAM_TOKEN="extension-token",
+        with patch.object(service, "_get_json", return_value=payload):
+            submissions = service.fetch_solved_submissions("demo-user")
+
+        self.assertEqual(len(submissions), 1)
+        self.assertEqual(submissions[0]["platform_id"], "java-singleton")
+        self.assertEqual(submissions[0]["title"], "Java Singleton Pattern")
+        self.assertTrue(submissions[0]["url"].endswith("/challenges/java-singleton"))
+        self.assertIsNotNone(submissions[0]["solved_at"])
+
+
+class SyncRevisionIntegrationTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email="sync@example.com",
+            username="sync-user",
+            password="strong-pass-123",
+            hackerrank_username="sync-hacker",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertTrue(response.data["created"])
-        self.assertEqual(Problem.objects.count(), 1)
-        self.assertEqual(UserSolvedProblem.objects.count(), 1)
+    def test_synced_problem_is_added_to_revision_queue(self):
+        class FakeHackerRankService:
+            def validate_username(self, username):
+                return True
 
-        problem = Problem.objects.get()
-        solved = UserSolvedProblem.objects.get()
-        self.user.refresh_from_db()
-        self.connection.refresh_from_db()
+            def fetch_solved_submissions(self, username, since=None, limit=100):
+                return [
+                    {
+                        "platform_id": "java-singleton",
+                        "title": "Java Singleton Pattern",
+                        "url": "https://www.hackerrank.com/challenges/java-singleton",
+                        "solved_at": None,
+                    }
+                ]
 
-        self.assertEqual(problem.title, "Two Sum")
-        self.assertEqual(problem.platform, "leetcode")
-        self.assertEqual(problem.difficulty.slug, "easy")
-        self.assertEqual(problem.tags.count(), 2)
-        self.assertEqual(solved.submission_id, "123456789")
-        self.assertEqual(solved.runtime_ms, 52)
-        self.assertEqual(solved.memory_kb, 18200)
-        self.assertEqual(self.user.solved_count, 1)
-        self.assertEqual(self.user.leetcode_username, "leetuser")
-        self.assertEqual(self.connection.remote_solved_count, 1)
+        with patch.dict(SyncService.PLATFORM_SERVICES, {"hackerrank": FakeHackerRankService}):
+            result = SyncService.sync_user_platform(self.user, "hackerrank")
 
-    def test_duplicate_submission_updates_existing_entry_without_creating_duplicate(self):
-        self.connection.api_token = "extension-token"
-        self.connection.save(update_fields=["api_token"])
-        payload = self.accepted_payload()
-
-        first_response = self.client.post(
-            reverse("api-leetcode-submission"),
-            data=payload,
-            format="json",
-            HTTP_X_LEETGRAM_TOKEN="extension-token",
-        )
-        self.assertEqual(first_response.status_code, status.HTTP_201_CREATED)
-
-        payload["runtime_ms"] = 44
-        payload["memory_kb"] = 17600
-        second_response = self.client.post(
-            reverse("api-leetcode-submission"),
-            data=payload,
-            format="json",
-            HTTP_X_LEETGRAM_TOKEN="extension-token",
-        )
-
-        self.assertEqual(second_response.status_code, status.HTTP_200_OK)
-        self.assertEqual(Problem.objects.count(), 1)
-        self.assertEqual(UserSolvedProblem.objects.count(), 1)
-        solved = UserSolvedProblem.objects.get()
-        self.assertEqual(solved.runtime_ms, 44)
-        self.assertEqual(solved.memory_kb, 17600)
+        self.assertEqual(result["status"], "success")
+        self.assertEqual(UserSolvedProblem.objects.filter(user=self.user).count(), 1)
+        self.assertEqual(RevisionItem.objects.filter(revision_list__user=self.user).count(), 1)
