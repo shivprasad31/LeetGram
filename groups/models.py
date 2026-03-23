@@ -143,6 +143,20 @@ class GroupTask(models.Model):
         return f"{self.group}: {self.title}"
 
 
+class GroupTaskCompletion(models.Model):
+    task = models.ForeignKey("groups.GroupTask", on_delete=models.CASCADE, related_name="completions")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="completed_group_tasks")
+    completed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-completed_at"]
+        unique_together = ("task", "user")
+        indexes = [models.Index(fields=["task", "user"])]
+
+    def __str__(self):
+        return f"{self.user} completed {self.task}"
+
+
 class GroupChallenge(models.Model):
     status_choices = [
         ("pending", "Pending"),

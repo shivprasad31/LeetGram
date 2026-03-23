@@ -69,6 +69,13 @@
             <p class="text-muted-soft mb-0">Badges will appear as you build streaks, solve more, and compete more often.</p>
           {% endfor %}
         </div>
+
+        <div class="profile-section-card mt-4 profile-solved-shortcut">
+          <div class="editorial-kicker mb-2">Solved Questions</div>
+          <h3 class="h4 mb-2">Browse every saved solve in one place.</h3>
+          <p class="text-muted-soft mb-3">Search by problem name and filter by platform or difficulty from a dedicated section.</p>
+          <a class="btn btn-outline-dark rounded-pill px-4" href="{% url 'profiles:solved' profile_stats.user.username %}">Open Solved Questions</a>
+        </div>
       </div>
     </div>
 

@@ -5,15 +5,35 @@
   <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
     <div>
       <h1 class="section-title mb-1">Groups Workspace</h1>
-      <p class="text-muted-soft mb-0">Create groups, track shared tasks, and send lightweight challenges.</p>
+      <p class="text-muted-soft mb-0">A focused space for member visibility, shared questions, and real group activity.</p>
     </div>
     <button class="btn btn-dark rounded-pill px-4" type="button" data-bs-toggle="modal" data-bs-target="#createGroupModal">Create Group</button>
   </div>
 
   <div class="row g-4 align-items-stretch">
-    <div class="col-12 col-xl-3">
-      <aside class="app-card groups-sidebar h-100">
+    <div class="col-12 col-xl-4">
+      <aside class="app-card groups-sidebar h-100 d-flex flex-column">
         <div class="groups-sidebar-block border-bottom pb-3 mb-3">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <h2 class="h5 mb-0">Your Groups</h2>
+            <span class="soft-badge">{{ groups|length }}</span>
+          </div>
+          <div class="group-list-stack">
+            {% for group in groups %}
+              <a class="group-list-row {% if selected_group and selected_group.slug == group.slug %}is-active{% endif %}" href="{% url 'groups:index' %}?group={{ group.slug }}" data-group-switch data-group-slug="{{ group.slug }}">
+                <div class="group-list-avatar">{{ group.name|first|upper }}</div>
+                <div class="min-w-0 flex-grow-1">
+                  <div class="fw-semibold text-truncate">{{ group.name }}</div>
+                  <div class="text-muted-soft small text-truncate">{{ group.member_total }} members</div>
+                </div>
+              </a>
+            {% empty %}
+              <div class="groups-empty-note text-muted-soft">No groups yet. Create one!</div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="groups-sidebar-block mt-auto pt-3 border-top">
           <div class="d-flex align-items-center justify-content-between mb-3">
             <h2 class="h5 mb-0">Pending Invitations</h2>
             <span class="soft-badge">{{ pending_invites|length }}</span>
@@ -41,30 +61,10 @@
             {% endfor %}
           </div>
         </div>
-
-        <div class="groups-sidebar-block">
-          <div class="d-flex align-items-center justify-content-between mb-3">
-            <h2 class="h5 mb-0">Your Groups</h2>
-            <span class="soft-badge">{{ groups|length }}</span>
-          </div>
-          <div class="group-list-stack">
-            {% for group in groups %}
-              <a class="group-list-row {% if selected_group and selected_group.slug == group.slug %}is-active{% endif %}" href="{% url 'groups:index' %}?group={{ group.slug }}" data-group-switch>
-                <div class="group-list-avatar">{{ group.name|first|upper }}</div>
-                <div class="min-w-0 flex-grow-1">
-                  <div class="fw-semibold text-truncate">{{ group.name }}</div>
-                  <div class="text-muted-soft small text-truncate">{{ group.member_total }} members</div>
-                </div>
-              </a>
-            {% empty %}
-              <div class="groups-empty-note text-muted-soft">No groups yet. Create one!</div>
-            {% endfor %}
-          </div>
-        </div>
       </aside>
     </div>
 
-    <div class="col-12 col-xl-6">
+    <div class="col-12 col-xl-8">
       <section class="app-card groups-main-panel h-100 position-relative" id="groupMainPanel">
         <div class="groups-loading-state d-none" id="groupLoadingState">
           <div class="spinner-border text-dark" role="status"></div>
@@ -72,50 +72,66 @@
         </div>
 
         {% if selected_group %}
-          <header class="groups-main-header border-bottom pb-3 mb-4">
-            <div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
-              <div>
-                <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-                  <h2 class="mb-0">{{ selected_group.name }}</h2>
-                  <span class="soft-badge">{{ selected_group.member_count }} members</span>
-                  {% if selected_group_is_admin %}
-                    <span class="soft-badge">Admin</span>
-                  {% endif %}
-                </div>
-                <p class="text-muted-soft mb-0">{{ selected_group.description|default:'Focused collaboration space for tasks, invites, and challenges.' }}</p>
-              </div>
-              {% if selected_group_is_admin %}
-                <form method="post" action="{% url 'groups:send_invite' %}" class="groups-inline-form">
-                  {% csrf_token %}
-                  <input type="hidden" name="group_slug" value="{{ selected_group.slug }}">
-                  <select name="friend_id" class="form-select rounded-pill" {% if not selected_group_friend_options %}disabled{% endif %}>
-                    <option value="">Invite a friend</option>
-                    {% for friend in selected_group_friend_options %}
-                      <option value="{{ friend.id }}">{{ friend.username }}</option>
-                    {% endfor %}
-                  </select>
-                  <button class="btn btn-outline-dark rounded-pill px-3" type="submit" {% if not selected_group_friend_options %}disabled{% endif %}>Send Invite</button>
-                </form>
-              {% endif %}
-            </div>
-          </header>
-
-          <div class="groups-content-stack">
-            <section class="groups-section border-bottom pb-4 mb-4">
-              <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+          <div id="groupWorkspace" data-active-group="{{ selected_group.slug }}">
+            <header class="groups-main-header border-bottom pb-3 mb-4">
+              <div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
                 <div>
-                  <h3 class="h5 mb-1">Group Todo</h3>
-                  <p class="text-muted-soft small mb-0">Shared questions and practice targets for the group.</p>
+                  <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                    <h2 class="mb-0" id="groupTitle">{{ selected_group.name }}</h2>
+                    <span class="soft-badge" id="groupMemberCount">{{ selected_group.member_count }} members</span>
+                    <span class="soft-badge {% if not selected_group_is_admin %}d-none{% endif %}" id="groupAdminBadge">Admin</span>
+                  </div>
+                  <p class="text-muted-soft mb-0" id="groupDescription">{{ selected_group.description|default:'Focused collaboration space for questions and steady practice.' }}</p>
                 </div>
               </div>
+            </header>
 
-              {% if selected_group_is_admin %}
-                <form method="post" action="{% url 'groups:add_task' %}" class="groups-task-form mb-3">
+            <div class="groups-content-stack">
+              <section class="groups-section border-bottom pb-4 mb-4">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+                  <div>
+                    <h3 class="h5 mb-1">Members</h3>
+                    <p class="text-muted-soft small mb-0">Everyone in the group and their current role.</p>
+                  </div>
+                </div>
+                <div class="groups-list-shell" id="groupMembersList">
+                  {% for membership in selected_members %}
+                    <div class="groups-item-row groups-member-row">
+                      <div class="d-flex align-items-center gap-3 min-w-0">
+                        {% if membership.user.avatar %}
+                          <img src="{{ membership.user.avatar.url }}" alt="{{ membership.user.username }}" class="friends-avatar">
+                        {% else %}
+                          <span class="group-list-avatar">{{ membership.user.username|first|upper }}</span>
+                        {% endif %}
+                        <div class="min-w-0">
+                          <div class="fw-semibold text-truncate">{{ membership.user.username }}</div>
+                          <div class="text-muted-soft small text-truncate">{{ membership.get_role_display }}</div>
+                        </div>
+                      </div>
+                      <span class="badge {% if membership.role == 'owner' or membership.role == 'admin' %}text-bg-dark{% else %}text-bg-secondary{% endif %}">
+                        {{ membership.get_role_display }}
+                      </span>
+                    </div>
+                  {% empty %}
+                    <div class="groups-empty-note text-muted-soft">No members found for this group.</div>
+                  {% endfor %}
+                </div>
+              </section>
+
+              <section class="groups-section border-bottom pb-4 mb-4">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+                  <div>
+                    <h3 class="h5 mb-1">Group Todo</h3>
+                    <p class="text-muted-soft small mb-0">Only admins can add tasks and Question of the Day. Members can view and mark completion.</p>
+                  </div>
+                </div>
+
+                <form method="post" action="{% url 'groups:add_task' %}" class="groups-task-form mb-3 {% if not selected_group_is_admin %}d-none{% endif %}" id="groupTaskForm">
                   {% csrf_token %}
-                  <input type="hidden" name="group_slug" value="{{ selected_group.slug }}">
+                  <input type="hidden" name="group_slug" id="groupTaskSlug" value="{{ selected_group.slug }}">
                   <div class="row g-3">
                     <div class="col-md-6">
-                      <input class="form-control rounded-pill" type="text" name="title" placeholder="Task or question title">
+                      <input class="form-control rounded-pill" type="text" name="title" placeholder="Task or Question of the Day title">
                     </div>
                     <div class="col-md-3">
                       <input class="form-control rounded-pill" type="text" name="difficulty" placeholder="Difficulty">
@@ -131,138 +147,70 @@
                     <button class="btn btn-dark rounded-pill px-4" type="submit">Add Task</button>
                   </div>
                 </form>
-              {% endif %}
 
-              <div class="groups-list-shell">
-                {% for task in selected_tasks %}
-                  <div class="groups-item-row">
-                    <div class="min-w-0 flex-grow-1">
-                      <div class="fw-semibold text-truncate">{{ task.title }}</div>
-                      {% if task.description %}
-                        <div class="text-muted-soft small">{{ task.description|truncatechars:120 }}</div>
-                      {% endif %}
+                <div class="groups-list-shell" id="groupTasksList">
+                  {% for task in selected_tasks %}
+                    <div class="groups-item-row">
+                      <div class="min-w-0 flex-grow-1">
+                        <div class="fw-semibold text-truncate">{{ task.title }}</div>
+                        {% if task.description %}
+                          <div class="text-muted-soft small">{{ task.description|truncatechars:120 }}</div>
+                        {% endif %}
+                      </div>
+                      <div class="d-flex flex-wrap align-items-center gap-2 groups-row-actions">
+                        {% if task.difficulty %}
+                          <span class="soft-badge">{{ task.difficulty }}</span>
+                        {% endif %}
+                        {% if task.link %}
+                          <a class="btn btn-outline-dark btn-sm rounded-pill px-3" href="{{ task.link }}" target="_blank" rel="noopener">Open</a>
+                        {% endif %}
+                        {% if task.id in selected_task_completion_ids %}
+                          <span class="badge text-bg-success">Completed</span>
+                        {% else %}
+                          <form method="post" action="{% url 'groups:complete_task' task.id %}" class="m-0">
+                            {% csrf_token %}
+                            <button class="btn btn-dark btn-sm rounded-pill px-3" type="submit">Mark Complete</button>
+                          </form>
+                        {% endif %}
+                      </div>
                     </div>
-                    <div class="d-flex flex-wrap align-items-center gap-2">
-                      {% if task.difficulty %}
-                        <span class="soft-badge">{{ task.difficulty }}</span>
-                      {% endif %}
-                      {% if task.link %}
-                        <a class="btn btn-outline-dark btn-sm rounded-pill px-3" href="{{ task.link }}" target="_blank" rel="noopener">Open</a>
-                      {% endif %}
-                    </div>
-                  </div>
-                {% empty %}
-                  <div class="groups-empty-note text-muted-soft">No tasks added yet.</div>
-                {% endfor %}
-              </div>
-            </section>
-
-            <section class="groups-section border-bottom pb-4 mb-4">
-              <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
-                <div>
-                  <h3 class="h5 mb-1">Challenge System</h3>
-                  <p class="text-muted-soft small mb-0">Send a challenge to another member. Coding environment comes later.</p>
-                </div>
-              </div>
-
-              <form method="post" action="{% url 'groups:send_challenge' %}" class="groups-inline-form mb-3" id="groupChallengeForm">
-                {% csrf_token %}
-                <input type="hidden" name="group_slug" value="{{ selected_group.slug }}">
-                <select name="opponent_id" class="form-select rounded-pill" id="challengeOpponentSelect">
-                  <option value="">Select member</option>
-                  {% for membership in selected_members %}
-                    <option value="{{ membership.user.id }}" {% if membership.user == request.user %}data-self="true"{% endif %}>{{ membership.user.username }}</option>
+                  {% empty %}
+                    <div class="groups-empty-note text-muted-soft">No tasks added yet.</div>
                   {% endfor %}
-                </select>
-                <select name="problem_id" class="form-select rounded-pill">
-                  <option value="">Optional problem</option>
-                  {% for problem in problem_options %}
-                    <option value="{{ problem.id }}">{{ problem.canonical_name }}</option>
-                  {% endfor %}
-                </select>
-                <button class="btn btn-dark rounded-pill px-4" type="submit" id="sendChallengeButton">Send Challenge</button>
-              </form>
-
-              <div class="groups-list-shell">
-                {% for challenge in selected_challenges %}
-                  <div class="groups-item-row">
-                    <div class="min-w-0 flex-grow-1">
-                      <div class="fw-semibold text-truncate">{{ challenge.challenger.username }} vs {{ challenge.opponent.username }}</div>
-                      <div class="text-muted-soft small text-truncate">{{ challenge.problem.canonical_name|default:'No problem selected yet' }}</div>
-                    </div>
-                    <span class="soft-badge">{{ challenge.get_status_display }}</span>
-                  </div>
-                {% empty %}
-                  <div class="groups-empty-note text-muted-soft">No active challenges yet.</div>
-                {% endfor %}
-              </div>
-            </section>
-
-            <section class="groups-section">
-              <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
-                <div>
-                  <h3 class="h5 mb-1">Recent Activity</h3>
-                  <p class="text-muted-soft small mb-0">Actions inside this group appear here.</p>
                 </div>
-              </div>
+              </section>
 
-              <div class="groups-list-shell">
-                {% for activity in selected_activity %}
-                  <div class="groups-item-row">
-                    <div class="min-w-0 flex-grow-1">
-                      <div class="fw-semibold">{{ activity.label }}</div>
-                      <div class="text-muted-soft small">{{ activity.meta }}</div>
-                    </div>
-                    <small class="text-muted-soft">{{ activity.created_at|date:'M d, h:i A' }}</small>
+              <section class="groups-section">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+                  <div>
+                    <h3 class="h5 mb-1">Activity Feed</h3>
+                    <p class="text-muted-soft small mb-0">Recent solves, task completions, and group actions from group members.</p>
                   </div>
-                {% empty %}
-                  <div class="groups-empty-note text-muted-soft">No recent actions yet.</div>
-                {% endfor %}
-              </div>
-            </section>
+                </div>
+                <div class="groups-list-shell" id="groupActivityList">
+                  {% for activity in selected_activity %}
+                    <div class="groups-item-row">
+                      <div class="min-w-0 flex-grow-1">
+                        <div class="fw-semibold">{{ activity.label }}</div>
+                        <div class="text-muted-soft small">{{ activity.meta }}</div>
+                      </div>
+                      <small class="text-muted-soft">{{ activity.created_at|date:'M d, h:i A' }}</small>
+                    </div>
+                  {% empty %}
+                    <div class="groups-empty-note text-muted-soft">No recent actions yet.</div>
+                  {% endfor %}
+                </div>
+              </section>
+            </div>
           </div>
         {% else %}
-          <div class="groups-empty-center d-flex flex-column align-items-center justify-content-center text-center">
+          <div class="groups-empty-center d-flex flex-column align-items-center justify-content-center text-center" id="groupWorkspaceEmpty">
             <div class="feature-icon mb-3"><i class="bi bi-people"></i></div>
             <h2 class="h4 mb-2">No groups yet. Create one!</h2>
-            <p class="text-muted-soft mb-0">Start a private group with friends and manage tasks, invites, and challenges from one workspace.</p>
+            <p class="text-muted-soft mb-0">Start a private group with friends and manage shared questions from one clean workspace.</p>
           </div>
         {% endif %}
       </section>
-    </div>
-
-    <div class="col-12 col-xl-3">
-      <aside class="app-card groups-right-rail h-100">
-        <div class="border-bottom pb-3 mb-3">
-          <h2 class="h5 mb-1">Workspace Placeholder</h2>
-          <p class="text-muted-soft small mb-0">Reserved for future group analytics, richer challenge controls, and moderation tools.</p>
-        </div>
-
-        {% if selected_group %}
-          <div class="groups-list-shell">
-            <div class="groups-item-row">
-              <div>
-                <div class="fw-semibold">Admin</div>
-                <div class="text-muted-soft small">{{ selected_group.owner.username }}</div>
-              </div>
-            </div>
-            <div class="groups-item-row">
-              <div>
-                <div class="fw-semibold">Members</div>
-                <div class="text-muted-soft small">{{ selected_group.member_count }} active collaborators</div>
-              </div>
-            </div>
-            <div class="groups-item-row">
-              <div>
-                <div class="fw-semibold">Challenge Scope</div>
-                <div class="text-muted-soft small">Basic send-only mode enabled</div>
-              </div>
-            </div>
-          </div>
-        {% else %}
-          <div class="groups-empty-note text-muted-soft">Select a group to unlock more workspace tools here.</div>
-        {% endif %}
-      </aside>
     </div>
   </div>
 </section>
@@ -307,32 +255,151 @@
     </div>
   </div>
 </div>
-
+{% endblock %}
+{% block extra_js %}
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const loadingState = document.getElementById('groupLoadingState');
-    const groupMainPanel = document.getElementById('groupMainPanel');
-    const challengeSelect = document.getElementById('challengeOpponentSelect');
-    const challengeButton = document.getElementById('sendChallengeButton');
+document.addEventListener('DOMContentLoaded', function () {
+  const loadingState = document.getElementById('groupLoadingState');
+  const groupMainPanel = document.getElementById('groupMainPanel');
+  const workspace = document.getElementById('groupWorkspace');
 
-    document.querySelectorAll('[data-group-switch]').forEach(function (link) {
-      link.addEventListener('click', function () {
-        if (loadingState && groupMainPanel) {
-          loadingState.classList.remove('d-none');
-          groupMainPanel.classList.add('is-loading');
-        }
-      });
-    });
+  const roleLabel = (role) => {
+    if (role === 'owner') return 'Owner';
+    if (role === 'admin') return 'Admin';
+    return 'Member';
+  };
 
-    if (challengeSelect && challengeButton) {
-      const syncChallengeButton = function () {
-        const selectedOption = challengeSelect.options[challengeSelect.selectedIndex];
-        const disableButton = !selectedOption || !selectedOption.value || selectedOption.dataset.self === 'true';
-        challengeButton.disabled = disableButton;
-      };
-      syncChallengeButton();
-      challengeSelect.addEventListener('change', syncChallengeButton);
+  const roleBadgeClass = (role) => (role === 'owner' || role === 'admin' ? 'text-bg-dark' : 'text-bg-secondary');
+
+  const memberAvatar = (member) => {
+    if (member.avatar_url) {
+      return `<img src="${member.avatar_url}" alt="${member.username}" class="friends-avatar">`;
     }
+    return `<span class="group-list-avatar">${member.username.charAt(0).toUpperCase()}</span>`;
+  };
+
+  const renderMembers = (members) => {
+    const container = document.getElementById('groupMembersList');
+    if (!container) return;
+    if (!members.length) {
+      container.innerHTML = '<div class="groups-empty-note text-muted-soft">No members found for this group.</div>';
+      return;
+    }
+    container.innerHTML = members.map((member) => `
+      <div class="groups-item-row groups-member-row">
+        <div class="d-flex align-items-center gap-3 min-w-0">
+          ${memberAvatar(member)}
+          <div class="min-w-0">
+            <div class="fw-semibold text-truncate">${member.username}</div>
+            <div class="text-muted-soft small text-truncate">${roleLabel(member.role)}</div>
+          </div>
+        </div>
+        <span class="badge ${roleBadgeClass(member.role)}">${roleLabel(member.role)}</span>
+      </div>
+    `).join('');
+  };
+
+  const renderTasks = (tasks, groupSlug) => {
+    const container = document.getElementById('groupTasksList');
+    if (!container) return;
+    if (!tasks.length) {
+      container.innerHTML = '<div class="groups-empty-note text-muted-soft">No tasks added yet.</div>';
+      return;
+    }
+    container.innerHTML = tasks.map((task) => `
+      <div class="groups-item-row">
+        <div class="min-w-0 flex-grow-1">
+          <div class="fw-semibold text-truncate">${task.title}</div>
+          ${task.description ? `<div class="text-muted-soft small">${task.description}</div>` : ''}
+        </div>
+        <div class="d-flex flex-wrap align-items-center gap-2 groups-row-actions">
+          ${task.difficulty ? `<span class="soft-badge">${task.difficulty}</span>` : ''}
+          ${task.link ? `<a class="btn btn-outline-dark btn-sm rounded-pill px-3" href="${task.link}" target="_blank" rel="noopener">Open</a>` : ''}
+          ${task.is_completed ? '<span class="badge text-bg-success">Completed</span>' : `
+            <form method="post" action="/groups/tasks/${task.id}/complete/" class="m-0">
+              <input type="hidden" name="csrfmiddlewaretoken" value="${document.querySelector('[name=csrfmiddlewaretoken]').value}">
+              <button class="btn btn-dark btn-sm rounded-pill px-3" type="submit">Mark Complete</button>
+            </form>
+          `}
+        </div>
+      </div>
+    `).join('');
+    const slugInput = document.getElementById('groupTaskSlug');
+    if (slugInput) {
+      slugInput.value = groupSlug;
+    }
+  };
+
+  const renderActivity = (activity) => {
+    const container = document.getElementById('groupActivityList');
+    if (!container) return;
+    if (!activity.length) {
+      container.innerHTML = '<div class="groups-empty-note text-muted-soft">No recent actions yet.</div>';
+      return;
+    }
+    container.innerHTML = activity.map((item) => `
+      <div class="groups-item-row">
+        <div class="min-w-0 flex-grow-1">
+          <div class="fw-semibold">${item.label}</div>
+          <div class="text-muted-soft small">${item.meta || ''}</div>
+        </div>
+        <small class="text-muted-soft">${new Date(item.created_at).toLocaleString()}</small>
+      </div>
+    `).join('');
+  };
+
+  const syncTaskFormVisibility = (isAdmin) => {
+    const form = document.getElementById('groupTaskForm');
+    const adminBadge = document.getElementById('groupAdminBadge');
+    if (form) {
+      form.classList.toggle('d-none', !isAdmin);
+    }
+    if (adminBadge) {
+      adminBadge.classList.toggle('d-none', !isAdmin);
+    }
+  };
+
+  document.querySelectorAll('[data-group-switch]').forEach(function (link) {
+    link.addEventListener('click', async function (event) {
+      event.preventDefault();
+      const slug = link.dataset.groupSlug;
+      if (!slug || !workspace || !loadingState || !groupMainPanel) {
+        window.location.href = link.href;
+        return;
+      }
+
+      loadingState.classList.remove('d-none');
+      groupMainPanel.classList.add('is-loading');
+
+      try {
+        const response = await fetch(`/groups/api/${slug}/`, {
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        if (!response.ok) {
+          window.location.href = link.href;
+          return;
+        }
+        const payload = await response.json();
+        const group = payload.group;
+        document.getElementById('groupTitle').textContent = group.name;
+        document.getElementById('groupDescription').textContent = group.description || 'Focused collaboration space for questions and steady practice.';
+        document.getElementById('groupMemberCount').textContent = `${group.member_count} members`;
+        workspace.dataset.activeGroup = group.slug;
+        syncTaskFormVisibility(group.is_admin);
+        renderMembers(group.members || []);
+        renderTasks(group.tasks || [], group.slug);
+        renderActivity(group.activity || []);
+        document.querySelectorAll('[data-group-switch]').forEach((item) => item.classList.remove('is-active'));
+        link.classList.add('is-active');
+        history.replaceState({}, '', `${window.location.pathname}?group=${group.slug}`);
+      } catch (error) {
+        window.location.href = link.href;
+      } finally {
+        loadingState.classList.add('d-none');
+        groupMainPanel.classList.remove('is-loading');
+      }
+    });
   });
+});
 </script>
 {% endblock %}

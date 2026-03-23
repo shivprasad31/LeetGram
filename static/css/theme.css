@@ -1614,10 +1614,6 @@ html[data-theme="dark"] .groups-task-form {
   min-height: 32rem;
 }
 
-.groups-right-rail {
-  min-height: 100%;
-}
-
 .groups-friend-picker {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1658,6 +1654,15 @@ html[data-theme="dark"] .groups-loading-state {
   opacity: 0.32;
 }
 
+.groups-member-row {
+  align-items: center;
+}
+
+.groups-row-actions {
+  position: relative;
+  z-index: 1;
+}
+
 @media (max-width: 991px) {
   .groups-friend-picker {
     grid-template-columns: 1fr;
@@ -1690,4 +1695,63 @@ html[data-theme="dark"] .groups-loading-state {
 
 .friends-row {
   overflow: hidden;
+}
+
+.solved-question-list {
+  background: transparent;
+}
+
+.solved-question-row {
+  display: block;
+  border-bottom: 1px solid var(--color-border) !important;
+  color: var(--color-text) !important;
+  background: transparent !important;
+  border-radius: 1rem;
+  margin: 0 -0.35rem;
+  padding: 0.95rem 0.35rem !important;
+  text-decoration: none;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.solved-question-row:last-child {
+  border-bottom: 0 !important;
+}
+
+.solved-question-row:hover,
+.solved-question-row:focus-visible {
+  background: rgba(255, 107, 107, 0.08) !important;
+  color: var(--color-text) !important;
+  outline: none;
+}
+
+html[data-theme="dark"] .solved-question-row:hover,
+html[data-theme="dark"] .solved-question-row:focus-visible {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+.solved-platform-badge {
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--color-text) !important;
+  border: 1px solid var(--color-border);
+}
+
+html[data-theme="dark"] .solved-platform-badge {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text) !important;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.solved-difficulty-badge {
+  color: #111827;
+}
+
+html[data-theme="dark"] .solved-difficulty-badge.text-bg-warning {
+  color: #111827;
+}
+
+@media (max-width: 767px) {
+  .solved-question-row .d-flex.align-items-center.gap-3 {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
 }
