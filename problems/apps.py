@@ -6,3 +6,6 @@ class ProblemsConfig(AppConfig):
     name = "problems"
     verbose_name = "Problems"
 
+    def ready(self):
+        import problems.signals  # noqa: F401
+

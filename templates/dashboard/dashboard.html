@@ -10,9 +10,9 @@
       <a href="{% url 'problems:add-solved' %}" class="btn btn-dark rounded-pill px-4 py-2"><i class="bi bi-plus-circle me-2"></i>Add Solved Problem</a>
     </div>
     <div class="col-lg-4">
-      <div class="metric-pill mb-2"><i class="bi bi-trophy"></i> Global Rank: {{ global_position|default:'Unranked' }}</div>
+      <div class="metric-pill mb-2"><i class="bi bi-calendar-check"></i> Solved Today: {{ today_solved_count }}</div>
       <div class="metric-pill mb-2"><i class="bi bi-lightning-charge"></i> Streak: {{ request.user.streak }} days</div>
-      <div class="metric-pill"><i class="bi bi-stars"></i> Rating: {{ request.user.rating }}</div>
+      <div class="metric-pill"><i class="bi bi-stars"></i> Overall Solved: {{ overall_solved_count }}</div>
     </div>
   </div>
 </section>
@@ -36,8 +36,8 @@
         {% for problem in recommended_problems %}
           <div class="d-flex justify-content-between align-items-center py-3 border-top">
             <div>
-              <a href="{% url 'problems:detail' problem.slug %}" class="fw-semibold text-decoration-none">{{ problem.title }}</a>
-              <div class="small text-muted-soft">{{ problem.platform|title }} · {{ problem.difficulty.name }}</div>
+              <a href="{% url 'problems:detail' problem.slug %}" class="fw-semibold text-decoration-none">{{ problem.canonical_name }}</a>
+              <div class="small text-muted-soft">{{ problem.platform_problems.first.platform|title|default:'Sync' }} · {{ problem.difficulty.name }}</div>
             </div>
             <span class="soft-badge">{{ problem.points }} pts</span>
           </div>

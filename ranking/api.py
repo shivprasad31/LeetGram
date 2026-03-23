@@ -24,7 +24,7 @@ class GlobalLeaderboardSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = GlobalLeaderboard
-        fields = ["id", "username", "score", "rating", "total_solved", "challenges_won", "rank", "updated_at"]
+        fields = ["id", "username", "score", "total_solved", "challenges_won", "rank", "updated_at"]
 
 
 class DailyRankingViewSet(viewsets.ReadOnlyModelViewSet):

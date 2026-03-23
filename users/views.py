@@ -2,13 +2,13 @@ from django.contrib import messages
 from django.contrib.auth import login as auth_login
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth import views as auth_views
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from django.views.generic import CreateView
 
 from .forms import SignInForm, SignUpForm
-from .models import User
+from .tasks import dispatch_user_sync
 
 
 @method_decorator(never_cache, name="dispatch")
@@ -40,6 +40,7 @@ class RegisterView(CreateView):
     def form_valid(self, form):
         response = super().form_valid(form)
         auth_login(self.request, self.object)
+        if self.object.has_connected_profiles:
+            dispatch_user_sync(self.object.id)
         messages.success(self.request, "Account created successfully. Welcome to CodeArena!")
         return redirect(self.success_url)
-

@@ -5,13 +5,13 @@
   <section class="editorial-hero">
     <div class="row align-items-center g-5">
       <div class="col-lg-6">
-        <span class="eyebrow-pill mb-4"><i class="bi bi-stars"></i> Inspired by modern editorial SaaS storytelling</span>
+        <span class="eyebrow-pill mb-4"><i class="bi bi-stars"></i> Practice, compete, revise</span>
         <h1 class="hero-display fw-bold mb-4">Where competitive coders build momentum together.</h1>
-        <p class="hero-copy mb-0">CodeArena gives programming students one elegant workspace for challenges, revision, profile sync, team contests, rankings, and focused social accountability.</p>
+        <p class="hero-copy mb-0">CodeArena gives programming students one focused workspace for challenges, revision, profile sync, team contests, and steady problem-solving habits.</p>
         <div class="hero-button-row">
           {% if request.user.is_authenticated %}
-            <a href="{% url 'dashboard:dashboard' %}" class="btn btn-dark btn-lg rounded-pill px-4">Open Dashboard</a>
-            <a href="{% url 'profiles:detail' request.user.username %}" class="btn btn-outline-dark btn-lg rounded-pill px-4">View Profile</a>
+            <a href="{% url 'profiles:detail' request.user.username %}" class="btn btn-dark btn-lg rounded-pill px-4">View Profile</a>
+            <a href="{% url 'profiles:edit' request.user.username %}" class="btn btn-outline-dark btn-lg rounded-pill px-4">Edit Profile</a>
           {% else %}
             <a href="{% url 'users:register' %}" class="btn btn-dark btn-lg rounded-pill px-4">Start Free</a>
             <a href="{% url 'users:login' %}" class="btn btn-outline-dark btn-lg rounded-pill px-4">Login</a>
@@ -19,7 +19,7 @@
           <a href="{% url 'contests:index' %}" class="hero-soft-link"><i class="bi bi-arrow-right-circle"></i> Browse live contests</a>
         </div>
         <div class="d-flex flex-wrap gap-3 mt-4">
-          <span class="metric-pill"><i class="bi bi-trophy"></i> Real-time leaderboards</span>
+          <span class="metric-pill"><i class="bi bi-check2-square"></i> Daily solve tracking</span>
           <span class="metric-pill"><i class="bi bi-lightning-charge"></i> 3-problem duels</span>
           <span class="metric-pill"><i class="bi bi-arrow-repeat"></i> Smart revision loops</span>
         </div>
@@ -83,7 +83,7 @@
               </div>
             </div>
             <div class="soft-stats mt-3">
-              <div class="soft-stat-card"><span class="text-muted-soft small">Contest rating</span><strong>1530</strong></div>
+              <div class="soft-stat-card"><span class="text-muted-soft small">Solved this month</span><strong>42</strong></div>
               <div class="soft-stat-card"><span class="text-muted-soft small">Friends online</span><strong>09</strong></div>
             </div>
           </div>
@@ -123,7 +123,7 @@
       <div class="feature-panel">
         <div class="feature-icon mb-3"><i class="bi bi-people"></i></div>
         <h3 class="h4">Compete as a team</h3>
-        <p class="text-muted-soft mb-0">Groups power practice cohorts, team contests, and local leaderboards so improvement feels social, not isolated.</p>
+        <p class="text-muted-soft mb-0">Groups power practice cohorts, team contests, and local competition so improvement feels social, not isolated.</p>
       </div>
     </div>
   </section>
@@ -135,7 +135,7 @@
       <p class="text-muted-soft mb-4">CodeArena brings profile sync, progress visibility, shared competition, and review discipline into a single rhythm. That is the design principle behind the whole platform.</p>
       <div class="mini-list">
         <div class="mini-list-item"><span class="d-flex align-items-center gap-2"><span class="list-accent"></span> Sync LeetCode, Codeforces, and GFG progress</span><strong>Async</strong></div>
-        <div class="mini-list-item"><span class="d-flex align-items-center gap-2"><span class="list-accent"></span> Follow rankings across daily, weekly, and global boards</span><strong>Live</strong></div>
+        <div class="mini-list-item"><span class="d-flex align-items-center gap-2"><span class="list-accent"></span> Track daily solves and revision consistency</span><strong>Live</strong></div>
         <div class="mini-list-item"><span class="d-flex align-items-center gap-2"><span class="list-accent"></span> Build your own revision and contest cadence</span><strong>Flexible</strong></div>
       </div>
     </div>
@@ -186,8 +186,8 @@
               <div class="text-muted-soft small">Global</div>
             </div>
             <div class="text-end">
-              <div class="fw-semibold">{{ coder.rating }}</div>
-              <small class="text-muted-soft">{{ coder.solved_count }} solved</small>
+              <div class="fw-semibold">{{ coder.solved_count }}</div>
+              <small class="text-muted-soft">{{ coder.streak }} day streak</small>
             </div>
           </div>
         {% empty %}

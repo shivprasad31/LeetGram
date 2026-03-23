@@ -8,7 +8,7 @@ from dashboard.api import DashboardPreferenceView, DashboardSummaryView
 from friends.api import FriendRequestViewSet, FriendshipViewSet
 from groups.api import GroupInviteViewSet, GroupMembershipViewSet, GroupViewSet
 from notifications.api import NotificationViewSet
-from problems.api import ProblemDifficultyViewSet, ProblemTagViewSet, ProblemViewSet, UserSolvedProblemViewSet
+from problems.api import ProblemDifficultyViewSet, TagViewSet, ProblemViewSet, UserSolvedProblemViewSet
 from profiles.api import ActivityViewSet, ProfileStatisticsViewSet
 from ranking.api import DailyRankingViewSet, GlobalLeaderboardViewSet, WeeklyRankingViewSet
 from revision.api import RevisionItemViewSet, RevisionListViewSet, RevisionNotesViewSet
@@ -24,7 +24,7 @@ router.register("groups", GroupViewSet, basename="group")
 router.register("group-memberships", GroupMembershipViewSet, basename="group-membership")
 router.register("group-invites", GroupInviteViewSet, basename="group-invite")
 router.register("problem-difficulties", ProblemDifficultyViewSet, basename="problem-difficulty")
-router.register("problem-tags", ProblemTagViewSet, basename="problem-tag")
+router.register("problem-tags", TagViewSet, basename="problem-tag")
 router.register("problems", ProblemViewSet, basename="problem")
 router.register("solved-problems", UserSolvedProblemViewSet, basename="solved-problem")
 router.register("challenges", ChallengeResultViewSet, basename="challenge")

@@ -40,7 +40,6 @@ class UserManager(BaseUserManager):
 
 class User(AbstractUser):
     email = models.EmailField(unique=True)
-    rating = models.PositiveIntegerField(default=1200, db_index=True)
     rank = models.CharField(max_length=64, blank=True)
     streak = models.PositiveIntegerField(default=0)
     solved_count = models.PositiveIntegerField(default=0, db_index=True)
@@ -48,6 +47,11 @@ class User(AbstractUser):
     bio = models.TextField(blank=True)
     github = models.URLField(blank=True)
     linkedin = models.URLField(blank=True)
+    codeforces_username = models.CharField(max_length=80, blank=True, null=True)
+    leetcode_username = models.CharField(max_length=80, blank=True, null=True)
+    gfg_username = models.CharField(max_length=80, blank=True, null=True)
+    hackerrank_username = models.CharField(max_length=80, blank=True, null=True)
+    last_synced_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     USERNAME_FIELD = "email"
@@ -56,9 +60,8 @@ class User(AbstractUser):
     objects = UserManager()
 
     class Meta:
-        ordering = ["-rating", "username"]
+        ordering = ["-solved_count", "-streak", "username"]
         indexes = [
-            models.Index(fields=["rating"]),
             models.Index(fields=["solved_count"]),
             models.Index(fields=["streak"]),
         ]
@@ -66,7 +69,17 @@ class User(AbstractUser):
     def __str__(self):
         return self.username or self.email
 
-
+    @property
+    def has_connected_profiles(self):
+        return any(
+            getattr(self, field)
+            for field in (
+                "codeforces_username",
+                "leetcode_username",
+                "gfg_username",
+                "hackerrank_username",
+            )
+        )
 
 
 class Badge(models.Model):
@@ -101,5 +114,4 @@ class UserBadge(models.Model):
         ordering = ["-awarded_at"]
 
     def __str__(self):
-        return f"{self.user} · {self.badge}"
-
+        return f"{self.user} - {self.badge}"

@@ -1,4 +1,4 @@
-﻿from django.utils import timezone
+from django.utils import timezone
 
 from celery import shared_task
 
@@ -13,7 +13,7 @@ def send_revision_reminders():
         create_notification(
             item.revision_list.user,
             "Revision reminder",
-            f"{item.problem.title} is ready for another review session.",
+            f"{item.problem.canonical_name} is ready for another review session.",
             category="revision",
             action_url="/revision/",
         )

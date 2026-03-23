@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Profile · {{ profile_stats.user.username }}{% endblock %}
+{% block title %}Profile - {{ profile_stats.user.username }}{% endblock %}
 {% block content %}
 <section class="profile-analytics-page my-4 animated-rise">
   <div class="row g-4">
@@ -18,17 +18,19 @@
             <div class="profile-avatar-xl profile-avatar-fallback mb-4">{{ profile_stats.user.username|first|upper }}</div>
           {% endif %}
           <h1 class="display-6 fw-bold mb-1">{{ profile_stats.user.username }}</h1>
-          <p class="text-muted-soft mb-2">{{ profile_stats.user.bio|default:'Competitive coder building consistency through challenges, revision, and clean feedback loops.' }}</p>
+          <p class="text-muted-soft mb-2">{{ profile_stats.user.bio|default:'Competitive coder building consistency through challenges and revision.' }}</p>
           <div class="d-flex flex-wrap gap-2 justify-content-center justify-content-lg-start mb-4">
-            {% if global_position %}<span class="soft-badge">Global #{{ global_position }}</span>{% endif %}
+            <span class="soft-badge">Solved today {{ today_solved_count }}</span>
+            <span class="soft-badge">Overall {{ overall_solved_count }}</span>
+            {% if profile_stats.user.last_synced_at %}<span class="soft-badge">Synced {{ profile_stats.user.last_synced_at|timesince }} ago</span>{% endif %}
           </div>
         </div>
 
         <div class="profile-metric-grid mb-4">
-          <div class="analytics-card"><span class="text-muted-soft small">Rating</span><strong>{{ profile_stats.user.rating }}</strong></div>
-          <div class="analytics-card"><span class="text-muted-soft small">Solved</span><strong>{{ profile_stats.total_solved }}</strong></div>
+          <div class="analytics-card"><span class="text-muted-soft small">Solved</span><strong>{{ overall_solved_count }}</strong></div>
           <div class="analytics-card"><span class="text-muted-soft small">Streak</span><strong>{{ profile_stats.user.streak }}</strong></div>
           <div class="analytics-card"><span class="text-muted-soft small">Friends</span><strong>{{ friend_count }}</strong></div>
+          <div class="analytics-card"><span class="text-muted-soft small">Groups</span><strong>{{ group_count }}</strong></div>
         </div>
 
         <div class="profile-section-card mb-4">
@@ -36,11 +38,27 @@
           <div class="d-grid gap-2">
             {% if profile_stats.user.github %}<a class="profile-link-pill" href="{{ profile_stats.user.github }}" target="_blank" rel="noreferrer"><i class="bi bi-github"></i><span>GitHub</span></a>{% endif %}
             {% if profile_stats.user.linkedin %}<a class="profile-link-pill" href="{{ profile_stats.user.linkedin }}" target="_blank" rel="noreferrer"><i class="bi bi-linkedin"></i><span>LinkedIn</span></a>{% endif %}
-            {% if profile_stats.user.linkedin %}<a class="profile-link-pill" href="{{ profile_stats.user.linkedin }}" target="_blank" rel="noreferrer"><i class="bi bi-linkedin"></i><span>LinkedIn</span></a>{% endif %}
             {% if not profile_stats.user.github and not profile_stats.user.linkedin %}
               <p class="text-muted-soft mb-0">No public links yet. Add them from the edit profile screen.</p>
             {% endif %}
           </div>
+        </div>
+
+        <div class="profile-section-card mb-4">
+          <div class="editorial-kicker mb-2">Connected Profiles</div>
+          {% for row in integration_rows %}
+            <div class="mini-list-item">
+              <div>
+                <div class="fw-semibold"><i class="bi {{ row.icon }} me-2"></i>{{ row.platform }}</div>
+                <small class="text-muted-soft">{{ row.username|default:'No username connected' }}</small>
+              </div>
+              <span class="badge {% if row.sync_failed %}text-bg-danger{% elif row.is_connected %}text-bg-success{% else %}text-bg-secondary{% endif %}">{{ row.status }}</span>
+            </div>
+            {% if row.error_message %}
+              <div class="small text-danger mt-1">{{ row.error_message }}</div>
+            {% endif %}
+          {% endfor %}
+          <div class="small text-muted-soft mt-3">Last synced: {% if profile_stats.user.last_synced_at %}{{ profile_stats.user.last_synced_at|date:'M d, Y h:i A' }}{% else %}Never{% endif %}</div>
         </div>
 
         <div class="profile-section-card">
@@ -62,26 +80,26 @@
               <div>
                 <div class="editorial-kicker mb-2">Solved mix</div>
                 <h2 class="section-title mb-1">Difficulty distribution</h2>
-                <p class="text-muted-soft mb-0">A quick read on how this profile balances foundational and advanced practice.</p>
+                <p class="text-muted-soft mb-0">Counts are now derived directly from solved problems, not stale profile fields.</p>
               </div>
-              <span class="soft-badge">{{ profile_stats.total_solved }} total</span>
+              <span class="soft-badge">{{ overall_solved_count }} total</span>
             </div>
             <div class="row align-items-center g-4">
               <div class="col-md-6"><canvas id="profileDifficultyChart" height="220"></canvas></div>
               <div class="col-md-6">
-                <div class="analytics-card mb-3"><span class="text-muted-soft small">Easy</span><strong>{{ profile_stats.easy_solved }}</strong></div>
-                <div class="analytics-card mb-3"><span class="text-muted-soft small">Medium</span><strong>{{ profile_stats.medium_solved }}</strong></div>
-                <div class="analytics-card"><span class="text-muted-soft small">Hard</span><strong>{{ profile_stats.hard_solved }}</strong></div>
+                <div class="analytics-card mb-3"><span class="text-muted-soft small">Easy</span><strong>{{ easy_solved_count }}</strong></div>
+                <div class="analytics-card mb-3"><span class="text-muted-soft small">Medium</span><strong>{{ medium_solved_count }}</strong></div>
+                <div class="analytics-card"><span class="text-muted-soft small">Hard</span><strong>{{ hard_solved_count }}</strong></div>
               </div>
             </div>
           </div>
         </div>
         <div class="col-md-4">
           <div class="profile-section-card h-100">
-            <div class="editorial-kicker mb-2">Competition pulse</div>
-            <div class="analytics-card mb-3"><span class="text-muted-soft small">Contests joined</span><strong>{{ profile_stats.contests_participated }}</strong></div>
-            <div class="analytics-card mb-3"><span class="text-muted-soft small">Contests won</span><strong>{{ profile_stats.contests_won }}</strong></div>
-            <div class="analytics-card"><span class="text-muted-soft small">Groups</span><strong>{{ group_count }}</strong></div>
+            <div class="editorial-kicker mb-2">Solved overview</div>
+            <div class="analytics-card mb-3"><span class="text-muted-soft small">Today</span><strong>{{ today_solved_count }}</strong></div>
+            <div class="analytics-card mb-3"><span class="text-muted-soft small">Overall</span><strong>{{ overall_solved_count }}</strong></div>
+            <div class="analytics-card"><span class="text-muted-soft small">Tracked date</span><strong class="profile-meta-strong">{{ today_label|date:'M d' }}</strong></div>
           </div>
         </div>
       </div>
@@ -90,35 +108,72 @@
         <div class="col-md-6">
           <div class="profile-section-card h-100">
             <div class="d-flex justify-content-between align-items-center mb-3">
-              <h3 class="h4 mb-0">Recent solves</h3>
-              <span class="text-muted-soft small">Latest accepted work</span>
+              <h3 class="h4 mb-0">Solved today by platform</h3>
+              <span class="text-muted-soft small">Daily categories</span>
             </div>
-            {% for solved in recent_solves %}
+            {% for entry in today_platform_breakdown %}
               <div class="mini-list-item">
-                <div>
-                  <div class="fw-semibold">{{ solved.problem.title }}</div>
-                  <small class="text-muted-soft">{{ solved.problem.platform|title }} · {{ solved.solved_at|date:'M d, Y' }}</small>
-                </div>
-                <span class="difficulty-{{ solved.problem.difficulty.slug }} fw-semibold">{{ solved.problem.difficulty.name }}</span>
+                <div class="fw-semibold">{{ entry.label }}</div>
+                <strong>{{ entry.count }}</strong>
               </div>
             {% empty %}
-              <p class="text-muted-soft mb-0">No solved problems recorded yet.</p>
+              <p class="text-muted-soft mb-0">No solves recorded for today yet.</p>
             {% endfor %}
           </div>
         </div>
         <div class="col-md-6">
           <div class="profile-section-card h-100">
             <div class="d-flex justify-content-between align-items-center mb-3">
-              <h3 class="h4 mb-0">Recent activity</h3>
-              <span class="text-muted-soft small">Latest profile events</span>
+              <h3 class="h4 mb-0">Overall categories</h3>
+              <span class="text-muted-soft small">Platform totals</span>
             </div>
-            {% for activity in recent_activity %}
-              <div class="timeline-item py-2">
-                <div class="fw-semibold">{{ activity.description }}</div>
-                <small class="text-muted-soft">{{ activity.created_at|timesince }} ago</small>
+            {% for entry in overall_platform_breakdown %}
+              <div class="mini-list-item">
+                <div class="fw-semibold">{{ entry.label }}</div>
+                <strong>{{ entry.count }}</strong>
               </div>
             {% empty %}
-              <p class="text-muted-soft mb-0">No recent activity yet.</p>
+              <p class="text-muted-soft mb-0">No platform totals yet.</p>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="profile-section-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h3 class="h4 mb-0">Difficulty categories</h3>
+              <span class="text-muted-soft small">Overall split</span>
+            </div>
+            {% for entry in difficulty_breakdown %}
+              <div class="mini-list-item">
+                <div>
+                  <div class="fw-semibold">{{ entry.label }}</div>
+                  <small class="difficulty-{{ entry.slug }}">{{ entry.slug|title }}</small>
+                </div>
+                <strong>{{ entry.count }}</strong>
+              </div>
+            {% empty %}
+              <p class="text-muted-soft mb-0">Difficulty stats will appear once solved problems are tracked.</p>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="profile-section-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h3 class="h4 mb-0">Recent solves</h3>
+              <a class="hero-soft-link" href="{% url 'profiles:solved' profile_stats.user.username %}">Open full list</a>
+            </div>
+            {% for solved in recent_solves %}
+              <div class="mini-list-item">
+                <div>
+                  <div class="fw-semibold">{{ solved.platform_problem.problem.canonical_name }}</div>
+                  <small class="text-muted-soft">{{ solved.platform_problem.platform|title }} - {{ solved.solved_at|date:'M d, Y' }}</small>
+                </div>
+                <span class="difficulty-{% if solved.platform_problem.problem.difficulty %}{{ solved.platform_problem.problem.difficulty.slug }}{% else %}medium{% endif %} fw-semibold">
+                  {% if solved.platform_problem.problem.difficulty %}{{ solved.platform_problem.problem.difficulty.name }}{% else %}Medium{% endif %}
+                </span>
+              </div>
+            {% empty %}
+              <p class="text-muted-soft mb-0">No solved problems recorded yet.</p>
             {% endfor %}
           </div>
         </div>
@@ -132,9 +187,9 @@
               <div class="mini-list-item">
                 <div>
                   <div class="fw-semibold">{{ friend.username }}</div>
-                  <small class="text-muted-soft">Global</small>
+                  <small class="text-muted-soft">{{ friend.solved_count }} solved</small>
                 </div>
-                <strong>{{ friend.rating }}</strong>
+                <a class="hero-soft-link" href="{% url 'profiles:detail' friend.username %}">Open</a>
               </div>
             {% empty %}
               <p class="text-muted-soft mb-0">No friends added yet.</p>

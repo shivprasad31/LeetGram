@@ -34,7 +34,7 @@ class FriendshipSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         user = request.user if request else None
         friend = obj.user_two if user == obj.user_one else obj.user_one
-        return {"id": friend.id, "username": friend.username, "rating": friend.rating}
+        return {"id": friend.id, "username": friend.username, "solved_count": friend.solved_count}
 
 
 class FriendRequestViewSet(viewsets.ModelViewSet):

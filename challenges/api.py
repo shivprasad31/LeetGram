@@ -1,4 +1,4 @@
-﻿from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError
 from django_ratelimit.decorators import ratelimit
 from rest_framework import serializers, viewsets
 from rest_framework.decorators import action
@@ -13,7 +13,7 @@ from .services import accept_challenge, create_challenge, start_challenge, submi
 
 
 class ChallengeProblemSerializer(serializers.ModelSerializer):
-    title = serializers.CharField(source="problem.title", read_only=True)
+    title = serializers.CharField(source="problem.canonical_name", read_only=True)
     slug = serializers.CharField(source="problem.slug", read_only=True)
 
     class Meta:

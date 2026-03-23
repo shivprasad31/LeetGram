@@ -1,9 +1,10 @@
-﻿from django.contrib import admin
+from django.contrib import admin
 
-from .models import Problem, ProblemDifficulty, ProblemTag, UserSolvedProblem
+from .models import Problem, ProblemDifficulty, Tag, UserSolvedProblem, PlatformProblem
 
 admin.site.register(ProblemDifficulty)
-admin.site.register(ProblemTag)
+admin.site.register(Tag)
+admin.site.register(PlatformProblem)
 admin.site.register(Problem)
 admin.site.register(UserSolvedProblem)
 
