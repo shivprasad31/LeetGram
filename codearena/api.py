@@ -2,7 +2,7 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from challenges.api import ChallengeResultViewSet, ChallengeViewSet
+from challenges.api import ChallengeEventViewSet, ChallengeResultViewSet, ChallengeSubmissionViewSet, ChallengeViewSet
 from contests.api import ContestLeaderboardViewSet, ContestSubmissionViewSet, ContestViewSet
 from dashboard.api import DashboardPreferenceView, DashboardSummaryView
 from friends.api import FriendRequestViewSet, FriendshipViewSet
@@ -27,8 +27,10 @@ router.register("problem-difficulties", ProblemDifficultyViewSet, basename="prob
 router.register("problem-tags", TagViewSet, basename="problem-tag")
 router.register("problems", ProblemViewSet, basename="problem")
 router.register("solved-problems", UserSolvedProblemViewSet, basename="solved-problem")
-router.register("challenges", ChallengeResultViewSet, basename="challenge")
+router.register("challenges", ChallengeViewSet, basename="challenge")
 router.register("challenge-results", ChallengeResultViewSet, basename="challenge-result")
+router.register("challenge-submissions", ChallengeSubmissionViewSet, basename="challenge-submission")
+router.register("challenge-events", ChallengeEventViewSet, basename="challenge-event")
 router.register("contests", ContestViewSet, basename="contest")
 router.register("contest-submissions", ContestSubmissionViewSet, basename="contest-submission")
 router.register("contest-leaderboard", ContestLeaderboardViewSet, basename="contest-leaderboard")

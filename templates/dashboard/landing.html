@@ -10,8 +10,8 @@
         <p class="hero-copy mb-0">CodeArena gives programming students one focused workspace for challenges, revision, profile sync, team contests, and steady problem-solving habits.</p>
         <div class="hero-button-row">
           {% if request.user.is_authenticated %}
-            <a href="{% url 'profiles:detail' request.user.username %}" class="btn btn-dark btn-lg rounded-pill px-4">View Profile</a>
-            <a href="{% url 'profiles:edit' request.user.username %}" class="btn btn-outline-dark btn-lg rounded-pill px-4">Edit Profile</a>
+            <a href="{% url 'dashboard:dashboard' %}" class="btn btn-dark btn-lg rounded-pill px-4">Open Dashboard</a>
+            <a href="{% url 'profiles:detail' request.user.username %}" class="btn btn-outline-dark btn-lg rounded-pill px-4">View Profile</a>
           {% else %}
             <a href="{% url 'users:register' %}" class="btn btn-dark btn-lg rounded-pill px-4">Start Free</a>
             <a href="{% url 'users:login' %}" class="btn btn-outline-dark btn-lg rounded-pill px-4">Login</a>
@@ -213,3 +213,5 @@
   </section>
 </div>
 {% endblock %}
+
+

@@ -1,4 +1,6 @@
 from django.contrib import messages
+from kombu.exceptions import OperationalError
+from redis.exceptions import RedisError
 from django.contrib.auth import login as auth_login
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth import views as auth_views
@@ -8,7 +10,7 @@ from django.views.decorators.cache import never_cache
 from django.views.generic import CreateView
 
 from .forms import SignInForm, SignUpForm
-from .tasks import dispatch_user_sync
+from .tasks import dispatch_user_sync, sync_user_all_platforms
 
 
 @method_decorator(never_cache, name="dispatch")
@@ -41,6 +43,11 @@ class RegisterView(CreateView):
         response = super().form_valid(form)
         auth_login(self.request, self.object)
         if self.object.has_connected_profiles:
-            dispatch_user_sync(self.object.id)
+            try:
+                sync_user_all_platforms.delay(self.object.id)
+            except (OperationalError, RedisError, OSError):
+                dispatch_user_sync(self.object.id, force_sync=True)
         messages.success(self.request, "Account created successfully. Welcome to CodeArena!")
         return redirect(self.success_url)
+
+

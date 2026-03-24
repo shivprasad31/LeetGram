@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+{% block title %}{{ challenge.title_snapshot }} · Challenge Room{% endblock %}
+{% block content %}
+<section class="my-4 challenge-room" data-challenge-room data-challenge-id="{{ challenge.id }}" data-start-url="/api/challenges/{{ challenge.id }}/start_challenge/" data-submit-url="/api/challenges/{{ challenge.id }}/submit_code/" data-result-url="/api/challenges/{{ challenge.id }}/get_result/" data-events-url="/api/challenges/{{ challenge.id }}/events/">
+  <div class="app-card mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+      <div>
+        <div class="editorial-kicker mb-2">Challenge Room</div>
+        <h1 class="section-title mb-1">{{ challenge.title_snapshot }}</h1>
+        <p class="text-muted-soft mb-0">{{ challenge.challenger.username }} vs {{ challenge.opponent.username }}{% if challenge.group %} · {{ challenge.group.name }}{% endif %}</p>
+      </div>
+      <div class="challenge-room-meta">
+        <div class="timer-pill" data-timer>Waiting...</div>
+        <div class="soft-badge" data-status>{{ challenge.get_status_display }}</div>
+      </div>
+    </div>
+    <div class="challenge-countdown mt-3" data-countdown hidden>3</div>
+    <div class="alert alert-light rounded-4 mt-3 mb-0" data-banner>Join the room to begin. The timer starts when both players are present.</div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-xl-4">
+      <div class="app-card h-100">
+        <div class="editorial-kicker mb-2">Problem</div>
+        <h2 class="h4 mb-3">{{ challenge.title_snapshot }}</h2>
+        <div class="challenge-problem-copy">
+          <p>{{ challenge.statement_snapshot|default:"No statement snapshot was stored for this problem."|linebreaksbr }}</p>
+        </div>
+        <div class="challenge-constraints mt-4">
+          <h3 class="h6 text-uppercase text-muted-soft">Constraints</h3>
+          <p class="mb-0">{{ challenge.constraints_snapshot|linebreaksbr }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-8">
+      <div class="app-card">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+          <div>
+            <div class="editorial-kicker mb-2">Editor</div>
+            <h2 class="h4 mb-0">Implement <code>solve(raw_input)</code></h2>
+          </div>
+          <button class="btn btn-dark rounded-pill" type="button" data-submit-button>Submit Code</button>
+        </div>
+        <textarea class="form-control rounded-4 challenge-editor" data-code-editor spellcheck="false">{{ starter_code }}</textarea>
+
+        <ul class="nav nav-pills mt-4 mb-3" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active rounded-pill" data-bs-toggle="pill" data-bs-target="#challenge-tests" type="button">Test Cases</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link rounded-pill" data-bs-toggle="pill" data-bs-target="#challenge-output" type="button">Output</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link rounded-pill" data-bs-toggle="pill" data-bs-target="#challenge-errors" type="button">Error</button>
+          </li>
+        </ul>
+        <div class="tab-content">
+          <div class="tab-pane fade show active" id="challenge-tests">
+            <div class="challenge-console" data-tests-panel>
+              {% for case in challenge.public_test_cases %}
+                <div class="challenge-test-case">
+                  <strong>Input</strong>
+                  <pre>{{ case.input }}</pre>
+                  <strong>Expected Output</strong>
+                  <pre>{{ case.output }}</pre>
+                </div>
+              {% empty %}
+                <p class="text-muted-soft mb-0">No public test cases were shared.</p>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="tab-pane fade" id="challenge-output">
+            <pre class="challenge-console" data-output-panel>Submit code to see output.</pre>
+          </div>
+          <div class="tab-pane fade" id="challenge-errors">
+            <pre class="challenge-console" data-error-panel>No errors yet.</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="app-card mt-4">
+        <div class="editorial-kicker mb-2">Battle Feed</div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="challenge-player-card">
+              <div class="d-flex justify-content-between align-items-center">
+                <h3 class="h5 mb-0">{{ challenge.challenger.username }}</h3>
+                <span class="soft-badge">Challenger</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="challenge-player-card">
+              <div class="d-flex justify-content-between align-items-center">
+                <h3 class="h5 mb-0">{{ challenge.opponent.username }}</h3>
+                <span class="soft-badge">Opponent</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="challenge-feed mt-3" data-submission-feed>
+          <p class="text-muted-soft mb-0">Waiting for submissions.</p>
+        </div>
+      </div>
+
+      <div class="app-card mt-4" data-result-panel hidden>
+        <div class="editorial-kicker mb-2">Result</div>
+        <h2 class="h3 mb-2" data-result-winner></h2>
+        <p class="text-muted-soft mb-0" data-result-copy></p>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (() => {
+    const room = document.querySelector("[data-challenge-room]");
+    if (!room) {
+      return;
+    }
+
+    const challengeId = room.dataset.challengeId;
+    const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]")?.value
+      || document.cookie.split("; ").find((item) => item.startsWith("csrftoken="))?.split("=")[1]
+      || "";
+    const timerNode = room.querySelector("[data-timer]");
+    const statusNode = room.querySelector("[data-status]");
+    const bannerNode = room.querySelector("[data-banner]");
+    const countdownNode = room.querySelector("[data-countdown]");
+    const codeEditor = room.querySelector("[data-code-editor]");
+    const submitButton = room.querySelector("[data-submit-button]");
+    const outputPanel = room.querySelector("[data-output-panel]");
+    const errorPanel = room.querySelector("[data-error-panel]");
+    const submissionFeed = room.querySelector("[data-submission-feed]");
+    const resultPanel = room.querySelector("[data-result-panel]");
+    const resultWinner = room.querySelector("[data-result-winner]");
+    const resultCopy = room.querySelector("[data-result-copy]");
+    let challengeState = {{ challenge_payload_json|safe }};
+    let countdownStarted = false;
+    let finished = challengeState.status === "finished";
+
+    const postJson = async (url, payload = {}) => {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken
+        },
+        body: JSON.stringify(payload)
+      });
+      return response.json();
+    };
+
+    const formatDuration = (seconds) => {
+      const minutes = String(Math.floor(seconds / 60)).padStart(2, "0");
+      const remaining = String(seconds % 60).padStart(2, "0");
+      return `${minutes}:${remaining}`;
+    };
+
+    const renderFeed = (submissions) => {
+      if (!submissions || !submissions.length) {
+        submissionFeed.innerHTML = '<p class="text-muted-soft mb-0">Waiting for submissions.</p>';
+        return;
+      }
+      submissionFeed.innerHTML = submissions.map((item) => `
+        <div class="challenge-feed-row">
+          <div>
+            <strong>${item.username}</strong>
+            <div class="text-muted-soft">${item.verdict} · ${item.time_taken_seconds}s</div>
+          </div>
+          <div class="soft-badge">${item.execution_time.toFixed(4)}s</div>
+        </div>
+      `).join("");
+    };
+
+    const renderResult = (result) => {
+      if (!result) {
+        resultPanel.hidden = true;
+        return;
+      }
+      resultPanel.hidden = false;
+      resultWinner.textContent = `${result.winner_name} wins`;
+      resultCopy.textContent = `Solved in ${result.time_taken} seconds. Resubmission is disabled after the battle is decided.`;
+    };
+
+    const renderState = (payload) => {
+      challengeState = payload;
+      statusNode.textContent = payload.status.charAt(0).toUpperCase() + payload.status.slice(1);
+      finished = payload.status === "finished";
+      renderFeed(payload.latest_submissions || []);
+      renderResult(payload.result);
+
+      if (payload.latest_submission) {
+        outputPanel.textContent = payload.latest_submission.output || "No output.";
+        errorPanel.textContent = payload.latest_submission.error_output || "No errors.";
+      }
+
+      if (payload.status === "accepted") {
+        bannerNode.textContent = "Waiting for both players to join the room.";
+      } else if (payload.status === "active") {
+        bannerNode.textContent = "Battle in progress. First correct submission wins.";
+      } else if (payload.status === "finished") {
+        bannerNode.textContent = "Battle finished.";
+      }
+
+      if (finished) {
+        submitButton.disabled = true;
+      }
+    };
+
+    const startCountdown = () => {
+      if (countdownStarted) {
+        return;
+      }
+      countdownStarted = true;
+      countdownNode.hidden = false;
+      let value = 3;
+      countdownNode.textContent = value;
+      const interval = window.setInterval(() => {
+        value -= 1;
+        if (value <= 0) {
+          countdownNode.textContent = "Go";
+          window.setTimeout(() => {
+            countdownNode.hidden = true;
+          }, 800);
+          window.clearInterval(interval);
+          return;
+        }
+        countdownNode.textContent = value;
+      }, 1000);
+    };
+
+    const tickTimer = () => {
+      if (!challengeState.start_time) {
+        timerNode.textContent = "Waiting...";
+        return;
+      }
+      const startTime = new Date(challengeState.start_time);
+      const endTime = challengeState.end_time ? new Date(challengeState.end_time) : new Date();
+      const elapsed = Math.max(0, Math.floor((endTime - startTime) / 1000));
+      timerNode.textContent = formatDuration(elapsed);
+    };
+
+    const refresh = async () => {
+      const response = await fetch(room.dataset.resultUrl, { headers: { "Accept": "application/json" } });
+      const payload = await response.json();
+      const wasInactive = challengeState.status !== "active";
+      renderState(payload);
+      if (wasInactive && payload.status === "active") {
+        startCountdown();
+      }
+      tickTimer();
+    };
+
+    submitButton.addEventListener("click", async () => {
+      submitButton.disabled = true;
+      const payload = await postJson(room.dataset.submitUrl, {
+        code: codeEditor.value,
+        language: "python"
+      });
+      outputPanel.textContent = payload.output || "No output.";
+      errorPanel.textContent = payload.error_output || "No errors.";
+      await refresh();
+      if (!finished) {
+        submitButton.disabled = false;
+      }
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden && !finished) {
+        postJson(room.dataset.eventsUrl, { event_type: "tab_switch", metadata: { challenge_id: challengeId } });
+      }
+    });
+
+    window.addEventListener("blur", () => {
+      if (!finished) {
+        postJson(room.dataset.eventsUrl, { event_type: "window_blur", metadata: { challenge_id: challengeId } });
+      }
+    });
+
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then((stream) => {
+          stream.getTracks().forEach((track) => track.stop());
+          postJson(room.dataset.eventsUrl, { event_type: "camera_enabled", metadata: { challenge_id: challengeId } });
+        })
+        .catch(() => {
+          postJson(room.dataset.eventsUrl, { event_type: "camera_blocked", metadata: { challenge_id: challengeId } });
+        });
+    }
+
+    renderState(challengeState);
+    tickTimer();
+    postJson(room.dataset.startUrl).then((payload) => {
+      renderState(payload);
+      if (payload.status === "active") {
+        startCountdown();
+      }
+      tickTimer();
+    });
+    window.setInterval(() => {
+      refresh().catch(() => {});
+      tickTimer();
+    }, 4000);
+  })();
+</script>
+{% endblock %}

@@ -20,7 +20,7 @@ class LandingPageView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["top_coders"] = User.objects.order_by("-solved_count", "-streak", "username")[:6]
-        context["trending_challenges"] = Challenge.objects.select_related("sender", "receiver").order_by("-created_at")[:5]
+        context["trending_challenges"] = Challenge.objects.select_related("challenger", "opponent").order_by("-created_at")[:5]
         context["active_contests"] = Contest.objects.select_related("host").order_by("start_at")[:4]
         return context
 
@@ -42,7 +42,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             {
                 "score_breakdown": breakdown,
                 "recommended_problems": recommended,
-                "active_challenges": Challenge.objects.filter(receiver=user).exclude(status="finished")[:5],
+                "active_challenges": Challenge.objects.select_related("challenger", "opponent").filter(opponent=user).exclude(status="finished")[:5],
                 "upcoming_contests": Contest.objects.order_by("start_at")[:5],
                 "today_solved_count": today_solved_count,
                 "overall_solved_count": user.solved_problems.count(),
@@ -51,3 +51,4 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             }
         )
         return context
+

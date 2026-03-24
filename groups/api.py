@@ -12,7 +12,7 @@ class GroupMembershipSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = GroupMembership
-        fields = ["id", "group", "user", "username", "role", "joined_at", "is_muted"]
+        fields = ["id", "group", "user", "username", "role", "joined_at", "is_muted", "total_challenges", "challenge_wins"]
         read_only_fields = ["joined_at"]
 
 
