@@ -8,6 +8,8 @@ class ProfileStatistics(models.Model):
     easy_solved = models.PositiveIntegerField(default=0)
     medium_solved = models.PositiveIntegerField(default=0)
     hard_solved = models.PositiveIntegerField(default=0)
+    total_challenges = models.PositiveIntegerField(default=0)
+    challenge_wins = models.PositiveIntegerField(default=0)
     contests_participated = models.PositiveIntegerField(default=0)
     contests_won = models.PositiveIntegerField(default=0)
 

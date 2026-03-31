@@ -1,5 +1,6 @@
 import uuid
 
+from django.conf import settings
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.db import models
@@ -80,6 +81,28 @@ class User(AbstractUser):
                 "hackerrank_username",
             )
         )
+
+
+class EmailOTP(models.Model):
+    email = models.EmailField(db_index=True)
+    otp = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["email", "-created_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.email} ({self.otp})"
+
+    @property
+    def expires_at(self):
+        return self.created_at + timezone.timedelta(seconds=getattr(settings, "OTP_EXPIRY_SECONDS", 300))
+
+    def is_expired(self):
+        return timezone.now() >= self.expires_at
 
 
 class Badge(models.Model):

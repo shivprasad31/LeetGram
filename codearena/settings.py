@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-4872p-!4v9qt8$dpss*cfb#=@#-x_-i!d4+3bt0=(7!@21h-s_
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["192.168.137.1:8000"]
 
 
 # Application definition
@@ -47,6 +47,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'codearena.middleware.RedirectOnErrorMiddleware',
 ]
 
 ROOT_URLCONF = 'codearena.urls'

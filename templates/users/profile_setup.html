@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Profile Setup - {{ request.user.username }}{% endblock %}
+{% block content %}
+<section class="auth-shell my-4 animated-rise">
+  <div class="row g-4 align-items-stretch auth-card-shell">
+    <div class="col-xl-5 col-lg-5">
+      <div class="auth-side-panel h-100">
+        <span class="eyebrow-pill mb-4"><i class="bi bi-person-badge"></i> Profile setup</span>
+        <h1 class="hero-display auth-display mb-4">Finish your profile and connect the platforms you care about.</h1>
+        <p class="hero-copy">Bio and primary coding handles live here now, separate from registration, so signup stays focused and fast.</p>
+        <div class="auth-list mt-4">
+          <div class="auth-list-item"><i class="bi bi-check-circle"></i><span>Add your bio now or leave it blank and come back later.</span></div>
+          <div class="auth-list-item"><i class="bi bi-check-circle"></i><span>Connect LeetCode and Codeforces now. More platforms stay available in profile edit.</span></div>
+          <div class="auth-list-item"><i class="bi bi-check-circle"></i><span>If handles are valid, sync starts automatically after save.</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-7 col-lg-7">
+      <div class="auth-form-panel h-100">
+        <span class="soft-badge mb-3 d-inline-block">Step 2</span>
+        <h2 class="section-title mb-2">Set up your public coding profile.</h2>
+        <p class="text-muted-soft mb-4">This step is separate from registration so the account can be created only after OTP verification.</p>
+        <form method="post" class="row g-3">
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+            <div class="col-12"><div class="alert alert-danger rounded-4 mb-0">{{ form.non_field_errors }}</div></div>
+          {% endif %}
+          <div class="col-12">
+            <label class="form-label" for="id_bio">Bio</label>
+            {{ form.bio }}
+            {% if form.bio.errors %}<div class="text-danger small mt-2">{{ form.bio.errors|join:', ' }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="id_leetcode_username">LeetCode</label>
+            {{ form.leetcode_username }}
+            {% if form.leetcode_username.errors %}<div class="text-danger small mt-2">{{ form.leetcode_username.errors|join:', ' }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="id_codeforces_username">Codeforces</label>
+            {{ form.codeforces_username }}
+            {% if form.codeforces_username.errors %}<div class="text-danger small mt-2">{{ form.codeforces_username.errors|join:', ' }}</div>{% endif %}
+          </div>
+          <div class="col-12 d-flex flex-wrap gap-3 pt-2">
+            <button class="btn btn-dark btn-lg rounded-pill px-4" type="submit">Save and Continue</button>
+            <a class="btn btn-outline-dark btn-lg rounded-pill px-4" href="{% url 'dashboard:landing' %}">Skip for Now</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

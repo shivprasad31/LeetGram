@@ -49,6 +49,7 @@ class Problem(models.Model):
     slug = models.SlugField(max_length=280, unique=True, blank=True)
     difficulty = models.ForeignKey("problems.ProblemDifficulty", on_delete=models.PROTECT, related_name="problems", null=True)
     statement = models.TextField(blank=True)
+    constraints = models.TextField(blank=True)
     points = models.PositiveIntegerField(default=100)
     tags = models.ManyToManyField("problems.Tag", related_name="problems", blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -72,6 +73,28 @@ class Problem(models.Model):
 
     def __str__(self):
         return self.canonical_name
+
+    @property
+    def title(self):
+        return self.canonical_name
+
+    @property
+    def description(self):
+        return self.statement
+
+
+class TestCase(models.Model):
+    problem = models.ForeignKey("problems.Problem", on_delete=models.CASCADE, related_name="test_cases")
+    input_data = models.TextField()
+    expected_output = models.TextField()
+    is_sample = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-is_sample", "id"]
+
+    def __str__(self):
+        return f"TestCase #{self.pk} for {self.problem}"
 
 
 class PlatformProblem(models.Model):

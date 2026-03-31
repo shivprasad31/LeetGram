@@ -67,6 +67,8 @@ class GroupMembership(models.Model):
     role = models.CharField(max_length=16, choices=role_choices, default="member")
     joined_at = models.DateTimeField(auto_now_add=True)
     is_muted = models.BooleanField(default=False)
+    total_challenges = models.PositiveIntegerField(default=0)
+    challenge_wins = models.PositiveIntegerField(default=0)
 
     class Meta:
         unique_together = ("group", "user")

@@ -1,8 +1,8 @@
 ﻿from django.contrib import admin
 
-from .models import RevisionItem, RevisionList, RevisionNotes
+from .models import RevisionItem, RevisionList, RevisionNote
 
 admin.site.register(RevisionList)
 admin.site.register(RevisionItem)
-admin.site.register(RevisionNotes)
+admin.site.register(RevisionNote)
 

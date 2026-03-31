@@ -4,11 +4,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}CodeArena{% endblock %}</title>
+  <title>{% block title %}LeetWise{% endblock %}</title>
   <script>
     (() => {
       const fallbackTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-      const storedTheme = localStorage.getItem("codearena-theme");
+      const storedTheme = localStorage.getItem("leetwise-theme") || localStorage.getItem("codearena-theme");
       const serverTheme = "{{ theme|default:'system' }}";
       const serverPreference = "{{ theme_preference|default:'system' }}";
       const normalizedTheme = storedTheme === "dark" || storedTheme === "light"

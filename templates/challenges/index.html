@@ -1,22 +1,167 @@
-﻿{% extends 'base.html' %}
-{% block title %}Challenges · CodeArena{% endblock %}
+{% extends "base.html" %}
+{% block title %}Challenges · LeetWise{% endblock %}
 {% block content %}
-<section class="my-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <div><h1 class="section-title mb-1">Challenge Arena</h1><p class="text-muted-soft mb-0">Revision-style duels based on shared solved problems.</p></div>
-  </div>
-  <div class="row g-4">
-    {% for challenge in challenges %}
-      <div class="col-lg-4 col-md-6">
-        <div class="app-card h-100">
-          <div class="d-flex justify-content-between align-items-start"><h3 class="mb-0">{{ challenge.sender.username }} vs {{ challenge.receiver.username }}</h3><span class="soft-badge">{{ challenge.get_status_display }}</span></div>
-          <p class="text-muted-soft mt-3">{{ challenge.time_limit_minutes }} minute duel{% if challenge.difficulty %} · {{ challenge.difficulty.name }}{% endif %}</p>
-          <div class="mt-3">{% for item in challenge.challenge_problems.all %}<div class="py-2 border-top">{{ item.position }}. {{ item.problem.title }}</div>{% endfor %}</div>
+<section class="my-4 challenges-shell">
+  <div class="hero-shell mb-4">
+    <div class="row g-4 align-items-center">
+      <div class="col-lg-8">
+        <div class="eyebrow-pill mb-3">Friend Challenge System</div>
+        <h1 class="section-title mb-3">Real-time coding battles for friends and study groups.</h1>
+        <p class="hero-copy mb-0">Send a challenge, load one solved problem from your shared history, and race to the correct answer inside a controlled Docker judge with Python or Java.</p>
+      </div>
+      <div class="col-lg-4">
+        <div class="app-card challenge-hero-panel h-100">
+          <div class="editorial-kicker mb-2">Battle Rules</div>
+          <div class="mini-list">
+            <div class="mini-list-item"><span>Language</span><strong>Python / Java</strong></div>
+            <div class="mini-list-item"><span>Judge</span><strong>Database test cases</strong></div>
+            <div class="mini-list-item"><span>Winner</span><strong>First correct solution</strong></div>
+          </div>
         </div>
       </div>
-    {% empty %}
-      <p class="text-muted-soft">No challenges yet.</p>
-    {% endfor %}
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-xl-4">
+      <div class="app-card h-100">
+        <div class="editorial-kicker mb-2">Send Challenge</div>
+        <h2 class="h4 mb-3">Start a new coding battle</h2>
+        <form method="post" action="{% url 'challenges:send' %}" class="d-grid gap-3">
+          {% csrf_token %}
+          <div>
+            <label class="form-label">Opponent</label>
+            <select class="form-select rounded-4 app-input" name="opponent_id" required>
+              <option value="">Select a friend or group member</option>
+              {% for user in eligible_opponents %}
+                <option value="{{ user.id }}">{{ user.username }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="form-label">Group Context</label>
+            <select class="form-select rounded-4 app-input" name="group_id">
+              <option value="">Direct friend challenge</option>
+              {% for membership in user_groups %}
+                <option value="{{ membership.group.id }}">{{ membership.group.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <button type="submit" class="btn btn-dark rounded-pill">Send Challenge</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="col-xl-4">
+      <div class="app-card h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <div class="editorial-kicker mb-2">Incoming Challenges</div>
+            <h2 class="h4 mb-0">Requests waiting on you</h2>
+          </div>
+          <span class="soft-badge">{{ pending_incoming|length }}</span>
+        </div>
+        <div class="d-grid gap-3">
+          {% for challenge in pending_incoming %}
+            <div class="challenge-card-lite">
+              <div class="d-flex justify-content-between gap-3">
+                <div>
+                  <h3 class="h5 mb-1">{{ challenge.challenger.username }}</h3>
+                  <p class="text-muted-soft mb-1">{{ challenge.title_snapshot }}</p>
+                  {% if challenge.group %}<p class="text-muted-soft mb-0">Group: {{ challenge.group.name }}</p>{% endif %}
+                </div>
+                <span class="soft-badge">{{ challenge.get_status_display }}</span>
+              </div>
+              <div class="d-flex flex-wrap gap-2 mt-3">
+                <form method="post" action="{% url 'challenges:accept' challenge.id %}">
+                  {% csrf_token %}
+                  <button class="btn btn-dark rounded-pill btn-sm" type="submit">Accept</button>
+                </form>
+                <form method="post" action="{% url 'challenges:reject' challenge.id %}">
+                  {% csrf_token %}
+                  <button class="btn btn-outline-dark rounded-pill btn-sm" type="submit">Reject</button>
+                </form>
+              </div>
+            </div>
+          {% empty %}
+            <p class="text-muted-soft mb-0">No incoming challenges right now.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-4">
+      <div class="app-card h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <div class="editorial-kicker mb-2">Open Rooms</div>
+            <h2 class="h4 mb-0">Track battles and join when ready</h2>
+          </div>
+          <span class="soft-badge">{{ open_room_count }}</span>
+        </div>
+        <div class="d-grid gap-3">
+          {% for challenge in active_challenges %}
+            <a class="challenge-card-lite text-decoration-none" href="{% url 'challenges:room' challenge.id %}">
+              <div class="d-flex justify-content-between gap-3">
+                <div>
+                  <h3 class="h5 mb-1">{{ challenge.challenger.username }} vs {{ challenge.opponent.username }}</h3>
+                  <p class="text-muted-soft mb-1">{{ challenge.title_snapshot }}</p>
+                  <p class="text-muted-soft mb-0">{{ challenge.get_status_display }}</p>
+                </div>
+                <span class="soft-badge">Open</span>
+              </div>
+            </a>
+          {% endfor %}
+          {% for challenge in pending_outgoing %}
+            <a class="challenge-card-lite text-decoration-none" href="{% url 'challenges:room' challenge.id %}">
+              <div class="d-flex justify-content-between gap-3">
+                <div>
+                  <h3 class="h5 mb-1">{{ challenge.opponent.username }}</h3>
+                  <p class="text-muted-soft mb-1">{{ challenge.title_snapshot }}</p>
+                  <p class="text-muted-soft mb-0">Waiting for acceptance</p>
+                </div>
+                <span class="soft-badge">Pending</span>
+              </div>
+            </a>
+          {% empty %}
+            {% if not active_challenges %}
+              <p class="text-muted-soft mb-0">No active battles yet.</p>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-card mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <div class="editorial-kicker mb-2">Results</div>
+        <h2 class="h4 mb-0">Recently finished battles</h2>
+      </div>
+    </div>
+    <div class="row g-3">
+      {% for challenge in finished_challenges %}
+        <div class="col-lg-6">
+          <a class="challenge-card-lite challenge-result-row text-decoration-none" href="{% url 'challenges:room' challenge.id %}">
+            <div>
+              <h3 class="h5 mb-1">{{ challenge.title_snapshot }}</h3>
+              <p class="text-muted-soft mb-0">{{ challenge.challenger.username }} vs {{ challenge.opponent.username }}</p>
+            </div>
+            <div class="text-end">
+              {% if challenge.result %}
+                <div class="winner-pill mb-1">{{ challenge.result.winner.username }}</div>
+                <small class="text-muted-soft">{{ challenge.result.time_taken }}s</small>
+              {% else %}
+                <small class="text-muted-soft">Finished</small>
+              {% endif %}
+            </div>
+          </a>
+        </div>
+      {% empty %}
+        <p class="text-muted-soft mb-0">No finished battles yet.</p>
+      {% endfor %}
+    </div>
   </div>
 </section>
 {% endblock %}

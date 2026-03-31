@@ -10,7 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 WINDOWS_LOCAL_REDIS = "redis://127.0.0.1:6379"
 DEFAULT_REDIS_BASE = WINDOWS_LOCAL_REDIS if os.name == "nt" else "redis://redis:6379"
 
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-codearena-dev-key")
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-leetwise-dev-key")
 DEBUG = os.getenv("DJANGO_DEBUG", "True").lower() == "true"
 ALLOWED_HOSTS = [host for host in os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost,testserver").split(",") if host]
 CSRF_TRUSTED_ORIGINS = [
@@ -34,7 +34,6 @@ INSTALLED_APPS = [
     "groups.apps.GroupsConfig",
     "problems.apps.ProblemsConfig",
     "challenges.apps.ChallengesConfig",
-    "contests.apps.ContestsConfig",
     "revision.apps.RevisionConfig",
     "ranking.apps.RankingConfig",
     "notifications.apps.NotificationsConfig",
@@ -119,7 +118,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-LOGIN_REDIRECT_URL = "dashboard:dashboard"
+LOGIN_REDIRECT_URL = "dashboard:landing"
 LOGOUT_REDIRECT_URL = "dashboard:landing"
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
@@ -129,7 +128,10 @@ EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() == "true"
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "CodeArena <noreply@codearena.dev>")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "LeetWise <noreply@leetwise.dev>")
+OTP_EXPIRY_SECONDS = int(os.getenv("OTP_EXPIRY_SECONDS", "300"))
+OTP_RESEND_COOLDOWN_SECONDS = int(os.getenv("OTP_RESEND_COOLDOWN_SECONDS", "60"))
+OTP_MAX_ATTEMPTS = int(os.getenv("OTP_MAX_ATTEMPTS", "5"))
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -167,7 +169,7 @@ else:
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-            "LOCATION": "codearena-local-cache",
+            "LOCATION": "leetwise-local-cache",
         }
     }
     CHANNEL_LAYERS = {
@@ -213,3 +215,15 @@ SYNC_RATE_LIMIT = "10/m"  # 10 requests per minute per platform
 SYNC_BATCH_SIZE = 50
 SYNC_RETRY_LIMIT = 5
 SYNC_DELAY_BETWEEN_CALLS = 1.0  # seconds
+
+CHALLENGE_USE_DOCKER = os.getenv("CHALLENGE_USE_DOCKER", "True").lower() == "true"
+CHALLENGE_DOCKER_IMAGE = os.getenv("CHALLENGE_DOCKER_IMAGE", "python:3.11-alpine")
+CHALLENGE_DOCKER_PYTHON_IMAGE = os.getenv("CHALLENGE_DOCKER_PYTHON_IMAGE", CHALLENGE_DOCKER_IMAGE)
+CHALLENGE_DOCKER_JAVA_IMAGE = os.getenv("CHALLENGE_DOCKER_JAVA_IMAGE", "eclipse-temurin:21-jdk-alpine")
+CHALLENGE_DOCKER_MEMORY = os.getenv("CHALLENGE_DOCKER_MEMORY", "128m")
+CHALLENGE_DOCKER_CPUS = os.getenv("CHALLENGE_DOCKER_CPUS", "0.50")
+CHALLENGE_EXECUTION_TIMEOUT_SECONDS = int(os.getenv("CHALLENGE_EXECUTION_TIMEOUT_SECONDS", "5"))
+CHALLENGE_MONACO_CDN = os.getenv(
+    "CHALLENGE_MONACO_CDN",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs",
+)

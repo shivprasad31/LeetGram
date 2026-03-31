@@ -1,5 +1,5 @@
 <nav class="navbar navbar-expand-xl glass-panel rounded-5 px-4 py-3 main-navbar">
-  <a class="navbar-brand brand-font" href="{% url 'dashboard:landing' %}">CodeArena</a>
+  <a class="navbar-brand brand-font" href="{% url 'dashboard:landing' %}">LeetWise</a>
   <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
     <span class="navbar-toggler-icon"></span>
   </button>
@@ -18,7 +18,6 @@
         <li class="nav-item"><a class="nav-link" href="{% url 'profiles:solved' request.user.username %}">Solved Questions</a></li>
         <li class="nav-item"><a class="nav-link" href="{% url 'groups:index' %}">Groups</a></li>
         <li class="nav-item"><a class="nav-link" href="{% url 'challenges:index' %}">Challenges</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'contests:index' %}">Contests</a></li>
         <li class="nav-item"><a class="nav-link" href="{% url 'revision:index' %}">Revision</a></li>
         <li class="nav-item dropdown ms-xl-2">
           <button class="nav-profile-button" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Profile menu">

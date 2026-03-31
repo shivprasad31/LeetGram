@@ -15,6 +15,8 @@ class ProfileStatisticsSerializer(serializers.ModelSerializer):
             "easy_solved",
             "medium_solved",
             "hard_solved",
+            "total_challenges",
+            "challenge_wins",
             "contests_participated",
             "contests_won",
         ]
