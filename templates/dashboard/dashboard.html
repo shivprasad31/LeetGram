@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
-{% block title %}Dashboard · CodeArena{% endblock %}
+{% block title %}Dashboard · LeetWise{% endblock %}
 {% block content %}
 <section class="hero-shell my-4 animated-rise">
   <div class="row align-items-center g-4">
     <div class="col-lg-8">
       <span class="soft-badge mb-3 d-inline-block">Personal Command Center</span>
       <h1 class="display-5 fw-bold mb-3">{{ request.user.username }}, your next best move is already queued.</h1>
-      <p class="text-muted-soft mb-3">Track momentum, review weak areas, and jump straight into the next contest or duel without context switching.</p>
+      <p class="text-muted-soft mb-3">Track momentum, review weak areas, and jump straight into the next duel without context switching.</p>
       <a href="{% url 'problems:add-solved' %}" class="btn btn-dark rounded-pill px-4 py-2"><i class="bi bi-plus-circle me-2"></i>Add Solved Problem</a>
     </div>
     <div class="col-lg-4">
@@ -20,7 +20,7 @@
 <section class="stat-grid my-4">
   <div class="app-card"><div class="text-muted-soft small">Total Score</div><div class="stat-value" data-counter="{{ score_breakdown.score }}">0</div></div>
   <div class="app-card"><div class="text-muted-soft small">Challenges Won</div><div class="stat-value" data-counter="{{ score_breakdown.challenges_won }}">0</div></div>
-  <div class="app-card"><div class="text-muted-soft small">Contest Points</div><div class="stat-value" data-counter="{{ score_breakdown.contest_points }}">0</div></div>
+  <div class="app-card"><div class="text-muted-soft small">Streak Bonus</div><div class="stat-value" data-counter="{{ score_breakdown.streak_bonus }}">0</div></div>
   <div class="app-card"><div class="text-muted-soft small">Solved Points</div><div class="stat-value" data-counter="{{ score_breakdown.solved_points }}">0</div></div>
 </section>
 
@@ -57,17 +57,6 @@
         </div>
       {% empty %}
         <p class="text-muted-soft mb-0">No active challenges right now.</p>
-      {% endfor %}
-    </div>
-    <div class="app-card">
-      <h3 class="mb-3">Upcoming Contests</h3>
-      {% for contest in upcoming_contests %}
-        <div class="py-2 border-bottom">
-          <a href="{% url 'contests:detail' contest.slug %}" class="fw-semibold text-decoration-none">{{ contest.title }}</a>
-          <div class="small text-muted-soft">{{ contest.start_at|date:'M d, H:i' }} · {{ contest.duration_minutes }} mins</div>
-        </div>
-      {% empty %}
-        <p class="text-muted-soft mb-0">No contests scheduled yet.</p>
       {% endfor %}
     </div>
   </div>

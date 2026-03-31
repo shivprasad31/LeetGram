@@ -36,11 +36,10 @@ class RevisionItem(models.Model):
         return f"{self.problem} in {self.revision_list}"
 
 
-class RevisionNotes(models.Model):
+class RevisionNote(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="revision_notes")
     problem = models.ForeignKey("problems.Problem", on_delete=models.CASCADE, related_name="revision_notes")
-    notes = models.TextField(blank=True)
-    memory_hook = models.CharField(max_length=255, blank=True)
+    note_text = models.TextField(blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -50,5 +49,7 @@ class RevisionNotes(models.Model):
     def __str__(self):
         return f"Notes for {self.problem}"
 
+
+RevisionNotes = RevisionNote
 
 

@@ -1,7 +1,6 @@
-﻿from django.db.models import Count, Sum
+from django.db.models import Count
 from django.utils import timezone
 
-from contests.models import ContestParticipant
 from challenges.models import Challenge
 from users.models import User
 
@@ -10,7 +9,7 @@ from .models import DailyRanking, GlobalLeaderboard, WeeklyRanking
 
 def score_breakdown_for_user(user):
     challenges_won = Challenge.objects.filter(winner=user, status="finished").count()
-    contest_points = ContestParticipant.objects.filter(user=user).aggregate(total=Sum("final_score"))["total"] or 0
+    contest_points = 0
     solved_points = user.solved_count * 2
     streak_bonus = user.streak * 5
     total = challenges_won * 25 + contest_points + solved_points + streak_bonus
@@ -71,4 +70,3 @@ def rebuild_periodic_rankings(target_date=None):
             streak_bonus=breakdown["streak_bonus"],
             rank=index,
         )
-

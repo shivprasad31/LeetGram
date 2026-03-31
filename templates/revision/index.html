@@ -1,8 +1,130 @@
-{% extends 'base.html' %}
-{% block title %}Revision · CodeArena{% endblock %}
+{% extends "base.html" %}
+{% block title %}Revision · LeetWise{% endblock %}
 {% block content %}
-<section class="row g-4 my-4">
-  <div class="col-lg-5"><div class="app-card h-100"><h2 class="section-title">Due for Review</h2>{% for item in due_items %}<div class="py-3 border-bottom"><div class="fw-semibold">{{ item.problem.canonical_name }}</div><small class="text-muted-soft">Priority {{ item.priority }} · Interval {{ item.interval_days }} days</small></div>{% empty %}<p class="text-muted-soft mb-0">Nothing due right now. Nice work.</p>{% endfor %}</div></div>
-  <div class="col-lg-7"><div class="app-card h-100"><h2 class="section-title">Revision Lists</h2>{% for revision_list in revision_lists %}<div class="py-3 border-bottom"><div class="fw-semibold">{{ revision_list.title }}</div><small class="text-muted-soft">{{ revision_list.items.count }} items queued</small></div>{% empty %}<p class="text-muted-soft mb-0">No revision lists configured yet.</p>{% endfor %}<h3 class="mt-4">Recent Notes</h3>{% for note in notes %}<div class="timeline-item py-2"><div class="fw-semibold">{{ note.problem.canonical_name }}</div><small class="text-muted-soft">{{ note.memory_hook|default:note.notes|truncatechars:90 }}</small></div>{% empty %}<p class="text-muted-soft mb-0">No notes saved yet.</p>{% endfor %}</div></div>
+<section class="my-4">
+  <div class="app-card mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3">
+      <div>
+        <div class="eyebrow-pill mb-2">Revision</div>
+        <h1 class="section-title mb-2">Revisit solved problems with clean notes.</h1>
+        <p class="text-muted-soft mb-0">Filter your solved history, search by name, open the original problem, and keep lightweight revision notes beside each entry.</p>
+      </div>
+      <div class="soft-badge">{{ page_obj.paginator.count }} problems</div>
+    </div>
+  </div>
+
+  <div class="app-card mb-4">
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-lg-4">
+        <label class="form-label">Search</label>
+        <input class="form-control rounded-4 app-input" type="search" name="search" value="{{ search_query }}" placeholder="Search by problem name">
+      </div>
+      <div class="col-md-3 col-lg-2">
+        <label class="form-label">Platform</label>
+        <select class="form-select rounded-4 app-input" name="platform">
+          <option value="">All</option>
+          {% for platform in platform_options %}
+            <option value="{{ platform }}"{% if platform == selected_platform %} selected{% endif %}>{{ platform|title }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3 col-lg-2">
+        <label class="form-label">Difficulty</label>
+        <select class="form-select rounded-4 app-input" name="difficulty">
+          <option value="">All</option>
+          {% for difficulty in difficulty_options %}
+            <option value="{{ difficulty.platform_problem__problem__difficulty__slug }}"{% if difficulty.platform_problem__problem__difficulty__slug == selected_difficulty %} selected{% endif %}>
+              {{ difficulty.platform_problem__problem__difficulty__name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3 col-lg-2">
+        <label class="form-label">Topic</label>
+        <select class="form-select rounded-4 app-input" name="topic">
+          <option value="">All</option>
+          {% for topic in topic_options %}
+            <option value="{{ topic.slug }}"{% if topic.slug == selected_topic %} selected{% endif %}>{{ topic.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3 col-lg-2 d-flex gap-2">
+        <button class="btn btn-dark rounded-pill w-100" type="submit">Apply</button>
+        <a class="btn btn-outline-dark rounded-pill w-100" href="{% url 'revision:index' %}">Reset</a>
+      </div>
+    </form>
+  </div>
+
+  <div class="app-card">
+    {% if solved_page %}
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Problem</th>
+              <th>Platform</th>
+              <th>Difficulty</th>
+              <th>Topics</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for solved in solved_page %}
+              <tr>
+                <td style="min-width: 240px;">
+                  <a class="fw-semibold text-decoration-none" href="{% if solved.platform_problem.url %}{{ solved.platform_problem.url }}{% else %}{% url 'problems:detail' solved.platform_problem.problem.slug %}{% endif %}" {% if solved.platform_problem.url %}target="_blank" rel="noreferrer"{% endif %}>
+                    {{ solved.platform_problem.problem.canonical_name }}
+                  </a>
+                  <div class="text-muted-soft small">Solved {{ solved.solved_at|date:"M d, Y" }}</div>
+                </td>
+                <td>{{ solved.platform_problem.platform|title }}</td>
+                <td>
+                  {% if solved.platform_problem.problem.difficulty %}
+                    <span class="difficulty-{{ solved.platform_problem.problem.difficulty.slug }}">{{ solved.platform_problem.problem.difficulty.name }}</span>
+                  {% else %}
+                    <span class="text-muted-soft">Unrated</span>
+                  {% endif %}
+                </td>
+                <td style="min-width: 180px;">
+                  {% for tag in solved.platform_problem.problem.tags.all %}
+                    <span class="soft-badge me-1 mb-1">{{ tag.name }}</span>
+                  {% empty %}
+                    <span class="text-muted-soft small">No topics</span>
+                  {% endfor %}
+                </td>
+                <td style="min-width: 320px;">
+                  <form method="post" action="?{{ request.GET.urlencode }}" class="d-grid gap-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="problem_id" value="{{ solved.platform_problem.problem_id }}">
+                    <textarea class="form-control rounded-4 app-input app-textarea" name="note_text" rows="4" placeholder="Add revision notes, edge cases, or reminders...">{{ solved.revision_note_text }}</textarea>
+                    <button class="btn btn-outline-dark rounded-pill btn-sm justify-self-start" type="submit">Save Notes</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if page_obj.paginator.num_pages > 1 %}
+        <div class="d-flex justify-content-between align-items-center mt-4">
+          <div class="text-muted-soft small">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</div>
+          <div class="d-flex gap-2">
+            {% if page_obj.has_previous %}
+              <a class="btn btn-outline-dark rounded-pill btn-sm" href="?search={{ search_query }}&platform={{ selected_platform }}&difficulty={{ selected_difficulty }}&topic={{ selected_topic }}&page={{ page_obj.previous_page_number }}">Previous</a>
+            {% endif %}
+            {% if page_obj.has_next %}
+              <a class="btn btn-dark rounded-pill btn-sm" href="?search={{ search_query }}&platform={{ selected_platform }}&difficulty={{ selected_difficulty }}&topic={{ selected_topic }}&page={{ page_obj.next_page_number }}">Next</a>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+    {% else %}
+      <div class="py-4 text-center">
+        <h2 class="h4 mb-2">No problems yet</h2>
+        <p class="text-muted-soft mb-0">Solve a few problems first and they’ll show up here for revision.</p>
+      </div>
+    {% endif %}
+  </div>
 </section>
 {% endblock %}

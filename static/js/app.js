@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const root = document.documentElement;
   const body = document.body;
   const themeToggle = document.querySelector("[data-theme-toggle]");
-  const storedTheme = localStorage.getItem("codearena-theme");
+  const storedTheme = localStorage.getItem("leetwise-theme") || localStorage.getItem("codearena-theme");
   const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
 
   const normalizeTheme = (theme) => {
@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
       body.dataset.theme = normalizedTheme;
       body.dataset.themePreference = normalizedTheme;
     }
-    localStorage.setItem("codearena-theme", normalizedTheme);
+    localStorage.setItem("leetwise-theme", normalizedTheme);
   };
 
   applyTheme(storedTheme || root.dataset.theme || body?.dataset.theme || "system");

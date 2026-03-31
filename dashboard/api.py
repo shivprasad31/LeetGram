@@ -4,7 +4,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from challenges.models import Challenge
-from contests.models import Contest
 from problems.services import recommend_problems_for_user
 from ranking.services import score_breakdown_for_user
 
@@ -28,7 +27,7 @@ class DashboardSummaryView(APIView):
             {
                 "score_breakdown": score_breakdown_for_user(user),
                 "active_challenges": Challenge.objects.filter(opponent=user).exclude(status="finished").count(),
-                "upcoming_contests": Contest.objects.count(),
+                "upcoming_contests": 0,
                 "recommended_problems": [problem.canonical_name for problem in recommended],
             }
         )

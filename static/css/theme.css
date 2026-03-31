@@ -966,6 +966,66 @@ html[data-theme="dark"] .auth-side-panel-warm {
   gap: 0.9rem;
 }
 
+.otp-side-panel {
+  position: relative;
+  overflow: hidden;
+}
+
+.otp-side-panel::after {
+  content: "";
+  position: absolute;
+  width: 14rem;
+  height: 14rem;
+  border-radius: 50%;
+  right: -4rem;
+  bottom: -4rem;
+  background: radial-gradient(circle, rgba(255, 107, 107, 0.16), transparent 70%);
+  pointer-events: none;
+}
+
+.otp-stage-card {
+  padding: 1.5rem;
+  border-radius: 1.5rem;
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+html[data-theme="dark"] .otp-stage-card {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.otp-stage {
+  margin-top: 1.35rem;
+  padding-top: 1.35rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.otp-password-group .form-control {
+  border-right: 0;
+}
+
+.otp-password-group .password-toggle-btn {
+  border-top-right-radius: 1rem;
+  border-bottom-right-radius: 1rem;
+  min-width: 3.5rem;
+}
+
+.inline-feedback {
+  font-size: 0.92rem;
+}
+
+.feedback-muted {
+  color: var(--color-muted);
+}
+
+.feedback-success {
+  color: #21b573;
+}
+
+.feedback-error {
+  color: #dc3545;
+}
+
 .profile-analytics-page,
 .profile-edit-shell {
   padding: 0.5rem 0 2rem;
@@ -1239,6 +1299,46 @@ html[data-theme="dark"] .chat-option-pill {
 
   .chat-message {
     width: 100%;
+  }
+
+  .otp-stage-card,
+  .profile-section-card,
+  .auth-side-panel,
+  .auth-form-panel,
+  .app-card,
+  .section-surface {
+    padding: 1.25rem;
+    border-radius: 1.5rem;
+  }
+
+  .btn-lg,
+  .btn-group-lg > .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 575px) {
+  .main-navbar {
+    border-radius: 1.35rem;
+  }
+
+  .hero-shell,
+  .section-surface {
+    padding: 1.25rem;
+  }
+
+  .container,
+  main.container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .auth-card-shell {
+    min-height: auto;
+  }
+
+  .otp-password-group {
+    flex-wrap: nowrap;
   }
 }
 

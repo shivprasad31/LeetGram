@@ -1,4 +1,3 @@
-from django_ratelimit.decorators import ratelimit
 from rest_framework import generics, permissions, serializers, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -93,9 +92,13 @@ class RegistrationView(generics.CreateAPIView):
     serializer_class = RegistrationSerializer
     permission_classes = [permissions.AllowAny]
 
-    @ratelimit(key="ip", rate="5/h", method="POST", block=True)
     def post(self, request, *args, **kwargs):
-        return super().post(request, *args, **kwargs)
+        return Response(
+            {
+                "detail": "Direct registration is disabled. Use the OTP signup flow at /send-otp/ and /verify-otp/.",
+            },
+            status=400,
+        )
 
 
 class CurrentUserView(generics.RetrieveAPIView):

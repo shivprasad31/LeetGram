@@ -13,7 +13,7 @@ class PlatformServiceError(Exception):
 
 
 class BasePlatformService:
-    user_agent = "codearena-sync/1.0"
+    user_agent = "leetwise-sync/1.0"
     timeout = 15
 
     def _request(self, url, *, method="GET", payload=None, headers=None):

@@ -21,7 +21,7 @@ def product_context(request):
         pending_friend_requests_count = FriendRequest.objects.filter(receiver=request.user, status="pending").count()
 
     return {
-        "app_name": "CodeArena",
+        "app_name": "LeetWise",
         "tagline": "Compete, connect, and revise smarter.",
         "pending_friend_requests_count": pending_friend_requests_count,
     }

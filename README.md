@@ -1,11 +1,11 @@
-# CodeArena
+# LeetWise
 
-CodeArena is a Django + DRF platform for programming students who want social accountability, challenge-based competition, contest hosting, revision tooling, external coding-profile sync, and live leaderboard updates in one product.
+LeetWise is a Django + DRF platform for programming students who want social accountability, challenge-based competition, contest hosting, revision tooling, external coding-profile sync, and live leaderboard updates in one product.
 
 ## Phase Map
 
 1. Project setup
-   The project is scaffolded as `codearena` with the required apps: `users`, `profiles`, `friends`, `groups`, `problems`, `integrations`, `challenges`, `contests`, `revision`, `ranking`, `notifications`, and `dashboard`.
+   The product is branded as LeetWise, while the internal Django package remains `codearena` for compatibility. The project includes the required apps: `users`, `profiles`, `friends`, `groups`, `problems`, `integrations`, `challenges`, `contests`, `revision`, `ranking`, `notifications`, and `dashboard`.
 
 2. Database design
    Each app owns its production-oriented models, constraints, indexes, and relationships. The custom `User` model lives in `users`, social graph models live in `friends` and `groups`, coding-domain entities live in `problems`, and competitive/revision flows live in `challenges`, `contests`, `revision`, and `ranking`.

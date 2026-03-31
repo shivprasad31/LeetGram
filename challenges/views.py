@@ -1,5 +1,6 @@
 import json
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -13,6 +14,7 @@ from groups.models import Group
 from users.models import User
 
 from .models import Challenge
+from .execution import available_language_options, starter_code_for
 from .services import (
     accept_challenge,
     build_challenge_payload,
@@ -39,6 +41,7 @@ class ChallengePageView(LoginRequiredMixin, TemplateView):
         user = self.request.user
         all_challenges = list(challenge_queryset_for(user))
         pending_incoming = [challenge for challenge in all_challenges if challenge.opponent_id == user.id and challenge.status == Challenge.STATUS_PENDING]
+        pending_outgoing = [challenge for challenge in all_challenges if challenge.challenger_id == user.id and challenge.status == Challenge.STATUS_PENDING]
         active_challenges = [challenge for challenge in all_challenges if challenge.status in {Challenge.STATUS_ACCEPTED, Challenge.STATUS_ACTIVE}]
         finished_challenges = [challenge for challenge in all_challenges if challenge.status == Challenge.STATUS_FINISHED][:8]
 
@@ -47,10 +50,11 @@ class ChallengePageView(LoginRequiredMixin, TemplateView):
                 "eligible_opponents": eligible_opponents_for(user),
                 "user_groups": user_groups_for(user),
                 "pending_incoming": pending_incoming,
+                "pending_outgoing": pending_outgoing,
                 "active_challenges": active_challenges,
+                "open_room_count": len(active_challenges) + len(pending_outgoing),
                 "finished_challenges": finished_challenges,
                 "all_challenges": all_challenges[:12],
-                "test_case_template": '[\n  {"input": "2 3", "output": "5", "is_public": true},\n  {"input": "10 15", "output": "25", "is_public": false}\n]',
             }
         )
         return context
@@ -68,11 +72,17 @@ class ChallengeRoomView(LoginRequiredMixin, DetailView):
         payload = build_challenge_payload(self.object, current_user=self.request.user)
         context["challenge_payload"] = payload
         context["challenge_payload_json"] = json.dumps(payload, cls=DjangoJSONEncoder)
-        context["starter_code"] = (
-            "def solve(raw_input: str) -> str:\n"
-            "    parts = raw_input.strip().split()\n"
-            "    # Write your solution and return the final answer as a string.\n"
-            "    return \"\"\n"
+        context["can_accept_here"] = self.request.user.id == self.object.opponent_id and self.object.status == Challenge.STATUS_PENDING
+        context["challenge_accept_url"] = reverse("challenges:accept", kwargs={"challenge_id": self.object.id})
+        context["challenge_reject_url"] = reverse("challenges:reject", kwargs={"challenge_id": self.object.id})
+        context["starter_code"] = starter_code_for(payload.get("language", Challenge.LANGUAGE_PYTHON))
+        context["monaco_cdn"] = getattr(settings, "CHALLENGE_MONACO_CDN", "")
+        context["starter_templates_json"] = json.dumps(
+            {
+                option["value"]: starter_code_for(option["value"])
+                for option in available_language_options()
+            },
+            cls=DjangoJSONEncoder,
         )
         return context
 
@@ -92,7 +102,6 @@ def send_challenge_view(request):
             opponent=opponent,
             group=group,
             time_limit_minutes=30,
-            test_cases=request.POST.get("test_cases", ""),
         )
         messages.success(request, f"Challenge sent to {opponent.username}.")
         return redirect(reverse("challenges:room", kwargs={"pk": challenge.id}))

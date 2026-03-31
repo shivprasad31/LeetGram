@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Challenges · CodeArena{% endblock %}
+{% block title %}Challenges · LeetWise{% endblock %}
 {% block content %}
 <section class="my-4 challenges-shell">
   <div class="hero-shell mb-4">
@@ -7,14 +7,14 @@
       <div class="col-lg-8">
         <div class="eyebrow-pill mb-3">Friend Challenge System</div>
         <h1 class="section-title mb-3">Real-time coding battles for friends and study groups.</h1>
-        <p class="hero-copy mb-0">Send a challenge, load one solved problem from your shared history, and race to the correct answer inside a controlled Python-only room.</p>
+        <p class="hero-copy mb-0">Send a challenge, load one solved problem from your shared history, and race to the correct answer inside a controlled Docker judge with Python or Java.</p>
       </div>
       <div class="col-lg-4">
         <div class="app-card challenge-hero-panel h-100">
           <div class="editorial-kicker mb-2">Battle Rules</div>
           <div class="mini-list">
-            <div class="mini-list-item"><span>Language</span><strong>Python</strong></div>
-            <div class="mini-list-item"><span>Judge</span><strong>Fixed test cases</strong></div>
+            <div class="mini-list-item"><span>Language</span><strong>Python / Java</strong></div>
+            <div class="mini-list-item"><span>Judge</span><strong>Database test cases</strong></div>
             <div class="mini-list-item"><span>Winner</span><strong>First correct solution</strong></div>
           </div>
         </div>
@@ -46,11 +46,6 @@
                 <option value="{{ membership.group.id }}">{{ membership.group.name }}</option>
               {% endfor %}
             </select>
-          </div>
-          <div>
-            <label class="form-label">Fixed Test Cases JSON</label>
-            <textarea class="form-control rounded-4 app-input app-textarea" name="test_cases" rows="8" required>{{ test_case_template }}</textarea>
-            <div class="form-text">Each case needs <code>input</code>, <code>output</code>, and optional <code>is_public</code>.</div>
           </div>
           <button type="submit" class="btn btn-dark rounded-pill">Send Challenge</button>
         </form>
@@ -99,10 +94,10 @@
       <div class="app-card h-100">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <div>
-            <div class="editorial-kicker mb-2">Active Challenges</div>
-            <h2 class="h4 mb-0">Join your current rooms</h2>
+            <div class="editorial-kicker mb-2">Open Rooms</div>
+            <h2 class="h4 mb-0">Track battles and join when ready</h2>
           </div>
-          <span class="soft-badge">{{ active_challenges|length }}</span>
+          <span class="soft-badge">{{ open_room_count }}</span>
         </div>
         <div class="d-grid gap-3">
           {% for challenge in active_challenges %}
@@ -116,8 +111,22 @@
                 <span class="soft-badge">Open</span>
               </div>
             </a>
+          {% endfor %}
+          {% for challenge in pending_outgoing %}
+            <a class="challenge-card-lite text-decoration-none" href="{% url 'challenges:room' challenge.id %}">
+              <div class="d-flex justify-content-between gap-3">
+                <div>
+                  <h3 class="h5 mb-1">{{ challenge.opponent.username }}</h3>
+                  <p class="text-muted-soft mb-1">{{ challenge.title_snapshot }}</p>
+                  <p class="text-muted-soft mb-0">Waiting for acceptance</p>
+                </div>
+                <span class="soft-badge">Pending</span>
+              </div>
+            </a>
           {% empty %}
-            <p class="text-muted-soft mb-0">No active battles yet.</p>
+            {% if not active_challenges %}
+              <p class="text-muted-soft mb-0">No active battles yet.</p>
+            {% endif %}
           {% endfor %}
         </div>
       </div>

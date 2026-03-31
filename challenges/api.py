@@ -3,8 +3,10 @@ from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from groups.models import Group
+from problems.models import Problem
 from users.models import User
 
 from .models import Challenge, ChallengeEvent, ChallengeResult, ChallengeSubmission
@@ -13,10 +15,13 @@ from .services import (
     build_challenge_payload,
     challenge_queryset_for,
     create_challenge,
+    forfeit_challenge,
     log_challenge_event,
     reject_challenge,
+    run_code_for_problem,
     start_challenge,
     submit_challenge_code,
+    update_challenge_presence,
 )
 
 
@@ -61,12 +66,13 @@ class ChallengeSerializer(serializers.ModelSerializer):
     challenger_name = serializers.CharField(source="challenger.username", read_only=True)
     opponent_name = serializers.CharField(source="opponent.username", read_only=True)
     group_name = serializers.CharField(source="group.name", read_only=True)
+    winner_name = serializers.CharField(source="winner.username", read_only=True)
+    disqualified_user_name = serializers.CharField(source="disqualified_user.username", read_only=True)
     result = ChallengeResultSerializer(read_only=True)
     latest_submissions = serializers.SerializerMethodField()
 
     opponent_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), source="opponent", write_only=True)
     group_id = serializers.PrimaryKeyRelatedField(queryset=Group.objects.all(), source="group", write_only=True, required=False, allow_null=True)
-    test_cases = serializers.JSONField(write_only=True)
 
     class Meta:
         model = Challenge
@@ -82,12 +88,15 @@ class ChallengeSerializer(serializers.ModelSerializer):
             "group_id",
             "problem",
             "status",
+            "finish_reason",
             "allowed_language",
+            "winner",
+            "winner_name",
+            "disqualified_user",
+            "disqualified_user_name",
             "title_snapshot",
             "statement_snapshot",
             "constraints_snapshot",
-            "public_test_cases",
-            "test_cases",
             "created_at",
             "accepted_at",
             "challenger_joined_at",
@@ -103,11 +112,13 @@ class ChallengeSerializer(serializers.ModelSerializer):
             "group",
             "problem",
             "status",
+            "finish_reason",
             "allowed_language",
+            "winner",
+            "disqualified_user",
             "title_snapshot",
             "statement_snapshot",
             "constraints_snapshot",
-            "public_test_cases",
             "created_at",
             "accepted_at",
             "challenger_joined_at",
@@ -127,9 +138,20 @@ class SubmitChallengeSerializer(serializers.Serializer):
     language = serializers.ChoiceField(choices=Challenge.LANGUAGE_CHOICES, default=Challenge.LANGUAGE_PYTHON)
 
 
+class RunCodeSerializer(serializers.Serializer):
+    problem_id = serializers.PrimaryKeyRelatedField(queryset=Problem.objects.all(), source="problem")
+    code = serializers.CharField()
+    language = serializers.ChoiceField(choices=Challenge.LANGUAGE_CHOICES, default=Challenge.LANGUAGE_PYTHON)
+
+
 class ChallengeEventCreateSerializer(serializers.Serializer):
     event_type = serializers.ChoiceField(choices=ChallengeEvent.EVENT_CHOICES)
     metadata = serializers.JSONField(required=False)
+
+
+class ChallengePresenceSerializer(serializers.Serializer):
+    camera_active = serializers.BooleanField()
+    snapshot_data = serializers.CharField(required=False, allow_blank=True)
 
 
 class ChallengeViewSet(viewsets.ModelViewSet):
@@ -147,7 +169,6 @@ class ChallengeViewSet(viewsets.ModelViewSet):
                 challenger=request.user,
                 opponent=serializer.validated_data["opponent"],
                 group=serializer.validated_data.get("group"),
-                test_cases=serializer.validated_data["test_cases"],
             )
         except DjangoValidationError as exc:
             raise serializers.ValidationError(exc.message if hasattr(exc, "message") else str(exc))
@@ -194,7 +215,38 @@ class ChallengeViewSet(viewsets.ModelViewSet):
             )
         except DjangoValidationError as exc:
             raise serializers.ValidationError(exc.message if hasattr(exc, "message") else str(exc))
-        return Response(ChallengeSubmissionSerializer(submission).data, status=status.HTTP_201_CREATED)
+        submission_payload = ChallengeSubmissionSerializer(submission).data
+        submission_payload["results"] = getattr(submission, "execution_details", {}).get("results", [])
+        submission_payload["passed_count"] = getattr(submission, "execution_details", {}).get("passed_count", 0)
+        submission_payload["failed_count"] = getattr(submission, "execution_details", {}).get("failed_count", 0)
+        submission_payload["supported"] = getattr(submission, "execution_details", {}).get("supported", True)
+        return Response(submission_payload, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=["post"])
+    def forfeit(self, request, pk=None):
+        challenge = self.get_object()
+        try:
+            forfeit_challenge(challenge, request.user)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(exc.message if hasattr(exc, "message") else str(exc))
+        challenge.refresh_from_db()
+        return Response(build_challenge_payload(challenge, current_user=request.user))
+
+    @action(detail=True, methods=["post"])
+    def presence(self, request, pk=None):
+        challenge = self.get_object()
+        serializer = ChallengePresenceSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            challenge = update_challenge_presence(
+                challenge,
+                request.user,
+                camera_active=serializer.validated_data["camera_active"],
+                snapshot_data=serializer.validated_data.get("snapshot_data", ""),
+            )
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(exc.message if hasattr(exc, "message") else str(exc))
+        return Response(build_challenge_payload(challenge, current_user=request.user))
 
     @action(detail=True, methods=["get"])
     def get_result(self, request, pk=None):
@@ -251,3 +303,18 @@ class ChallengeEventViewSet(viewsets.ReadOnlyModelViewSet):
         if challenge_id:
             queryset = queryset.filter(challenge_id=challenge_id)
         return queryset
+
+
+class RunCodeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = RunCodeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        execution = run_code_for_problem(
+            serializer.validated_data["problem"],
+            serializer.validated_data["code"],
+            serializer.validated_data["language"],
+        )
+        execution["problem_id"] = serializer.validated_data["problem"].id
+        return Response(execution)
