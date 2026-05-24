@@ -1,4 +1,4 @@
-﻿FROM python:3.13-slim
+FROM python:3.13-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -10,11 +10,11 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt /app/
+
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . /app/
-RUN chmod +x /app/docker/entrypoint.sh
 
-CMD ["/app/docker/entrypoint.sh", "gunicorn", "codearena.wsgi:application", "--bind", "0.0.0.0:8000"]
+EXPOSE 8000
 
-RUN chmod +x /app/docker/entrypoint.sh
+CMD ["gunicorn", "codearena.wsgi:application", "--bind", "0.0.0.0:8000"]
