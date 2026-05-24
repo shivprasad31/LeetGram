@@ -4,14 +4,13 @@ from django.contrib import admin
 from django.urls import include, path
 
 from profiles.views import get_profiles, sync_now, update_profile_integrations
-from users.views import ProfileSetupView, check_username, send_otp, verify_otp
+from users.views import ProfileSetupView, check_username
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("codearena.api")),
     path("accounts/", include("users.urls")),
-    path("send-otp/", send_otp, name="send-otp"),
-    path("verify-otp/", verify_otp, name="verify-otp"),
+    # OTP-based signup removed; use direct registration at /accounts/register/
     path("check-username/", check_username, name="check-username"),
     path("profile-setup/", ProfileSetupView.as_view(), name="profile-setup"),
     path("connect-profiles/", update_profile_integrations, name="connect-profiles"),

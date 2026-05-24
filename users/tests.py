@@ -4,76 +4,12 @@ from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import EmailOTP, User
+from .models import User
 from .tasks import sync_connected_user_profiles
 
 
 class RegistrationTests(TestCase):
-    def test_send_otp_stores_code_and_sends_email(self):
-        response = self.client.post(
-            reverse("send-otp"),
-            {
-                "email": "test@example.com",
-                "username": "testuser",
-                "password1": "strong-pass-123",
-                "password2": "strong-pass-123",
-            },
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(EmailOTP.objects.count(), 1)
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertIn("verification code", mail.outbox[0].subject.lower())
-
-    def test_verify_otp_creates_account_logs_user_in_and_redirects_to_profile_setup(self):
-        self.client.post(
-            reverse("send-otp"),
-            {
-                "email": "test@example.com",
-                "username": "testuser",
-                "password1": "strong-pass-123",
-                "password2": "strong-pass-123",
-            },
-        )
-        otp = EmailOTP.objects.get(email="test@example.com").otp
-
-        response = self.client.post(
-            reverse("verify-otp"),
-            {
-                "email": "test@example.com",
-                "otp": otp,
-            },
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(User.objects.count(), 1)
-        user = User.objects.get(email="test@example.com")
-        self.assertEqual(int(self.client.session["_auth_user_id"]), user.pk)
-        self.assertEqual(response.json()["redirect_url"], reverse("profile-setup"))
-
-    def test_verify_otp_rejects_too_many_attempts(self):
-        self.client.post(
-            reverse("send-otp"),
-            {
-                "email": "test@example.com",
-                "username": "testuser",
-                "password1": "strong-pass-123",
-                "password2": "strong-pass-123",
-            },
-        )
-
-        for _ in range(5):
-            response = self.client.post(
-                reverse("verify-otp"),
-                {
-                    "email": "test@example.com",
-                    "otp": "000000",
-                },
-            )
-
-        self.assertEqual(response.status_code, 429)
-        self.assertEqual(User.objects.count(), 0)
-        self.assertEqual(EmailOTP.objects.count(), 0)
+    # OTP flow removed; tests for OTP send/verify have been retired.
 
     def test_check_username_reports_existing_value(self):
         User.objects.create_user(
@@ -87,7 +23,7 @@ class RegistrationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertFalse(response.json()["available"])
 
-    def test_api_register_endpoint_is_disabled_without_otp(self):
+    def test_api_register_endpoint_creates_user(self):
         response = self.client.post(
             "/api/auth/register/",
             {
@@ -97,8 +33,8 @@ class RegistrationTests(TestCase):
             },
         )
 
-        self.assertEqual(response.status_code, 400)
-        self.assertIn("otp", response.json()["detail"].lower())
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(User.objects.filter(email="api@example.com").count(), 1)
 
     def test_profile_setup_saves_handles_and_dispatches_sync(self):
         user = User.objects.create_user(

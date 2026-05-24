@@ -93,12 +93,7 @@ class RegistrationView(generics.CreateAPIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request, *args, **kwargs):
-        return Response(
-            {
-                "detail": "Direct registration is disabled. Use the OTP signup flow at /send-otp/ and /verify-otp/.",
-            },
-            status=400,
-        )
+        return super().post(request, *args, **kwargs)
 
 
 class CurrentUserView(generics.RetrieveAPIView):
