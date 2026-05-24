@@ -16,3 +16,5 @@ COPY . /app/
 RUN chmod +x /app/docker/entrypoint.sh
 
 CMD ["/app/docker/entrypoint.sh", "gunicorn", "codearena.wsgi:application", "--bind", "0.0.0.0:8000"]
+
+RUN chmod +x /app/docker/entrypoint.sh
