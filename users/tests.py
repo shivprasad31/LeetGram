@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from .models import User
-from .tasks import sync_connected_user_profiles
+from .tasks import dispatch_user_sync, sync_connected_user_profiles
 
 
 class RegistrationTests(TestCase):
@@ -65,8 +65,52 @@ class RegistrationTests(TestCase):
         self.assertEqual(user.codeforces_username, "cf-user")
         mocked_delay.assert_called_once_with(user.id)
 
+    def test_profile_setup_falls_back_when_celery_backend_reconnects_fail(self):
+        user = User.objects.create_user(
+            email="test@example.com",
+            username="testuser",
+            password="strong-pass-123",
+        )
+        self.client.force_login(user)
+
+        with patch("users.views.sync_user_all_platforms.delay", side_effect=RuntimeError("Retry limit exceeded")) as mocked_delay, patch(
+            "users.views.dispatch_user_sync"
+        ) as mocked_fallback, patch(
+            "users.forms.LeetCodeService.validate_username", return_value=True
+        ), patch(
+            "users.forms.CodeforcesService.validate_username", return_value=True
+        ):
+            response = self.client.post(
+                reverse("profile-setup"),
+                {
+                    "bio": "I like graphs.",
+                    "leetcode_username": "leet_user",
+                    "codeforces_username": "cf-user",
+                },
+            )
+
+        user.refresh_from_db()
+        self.assertRedirects(response, reverse("profiles:detail", args=[user.username]))
+        mocked_delay.assert_called_once_with(user.id)
+        mocked_fallback.assert_called_once_with(user.id, force_sync=True)
+
 
 class AutomaticProfileSyncTests(TestCase):
+    def test_dispatch_user_sync_falls_back_when_celery_runtime_error_occurs(self):
+        user = User.objects.create_user(
+            email="connected@example.com",
+            username="connected-user",
+            password="strong-pass-123",
+            leetcode_username="leet_user",
+        )
+
+        with patch("users.tasks.sync_user_all_platforms.delay", side_effect=RuntimeError("Retry limit exceeded")):
+            result = dispatch_user_sync(user.id)
+
+        self.assertEqual(result["mode"], "sync")
+        self.assertEqual(result["result"]["user_id"], user.id)
+        self.assertIn("results", result["result"])
+
     def test_periodic_sync_queues_only_users_with_connected_profiles(self):
         connected = User.objects.create_user(
             email="connected@example.com",
@@ -123,3 +167,18 @@ class LogoutFlowTests(TestCase):
         self.assertRedirects(response, reverse("dashboard:landing"))
         self.assertNotIn("_auth_user_id", self.client.session)
         self.assertContains(response, "Login")
+
+    def test_authenticated_profile_edit_is_not_cached_after_logout(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("profiles:edit", args=[self.user.username]))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("no-store", response["Cache-Control"].lower())
+        self.assertIn("no-cache", response["Cache-Control"].lower())
+
+        self.client.post(reverse("users:logout"), {"next": reverse("dashboard:landing")})
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+        response_after_logout = self.client.get(reverse("profiles:edit", args=[self.user.username]))
+        self.assertEqual(response_after_logout.status_code, 302)
+        self.assertIn(reverse("users:login"), response_after_logout.url)

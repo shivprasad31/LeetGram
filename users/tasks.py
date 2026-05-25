@@ -37,7 +37,7 @@ def dispatch_user_sync(user_id, *, force_sync=False):
     try:
         sync_user_all_platforms.delay(user_id)
         return {"mode": "queued"}
-    except (OperationalError, RedisError, OSError):
+    except (OperationalError, RedisError, OSError, RuntimeError):
         result = _sync_user_all_platforms_now(user_id)
         return {"mode": "sync", "result": result}
 

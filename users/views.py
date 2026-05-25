@@ -80,7 +80,7 @@ class ProfileSetupView(UpdateView):
         if user.has_connected_profiles:
             try:
                 sync_user_all_platforms.delay(user.id)
-            except (OperationalError, RedisError, OSError):
+            except (OperationalError, RedisError, OSError, RuntimeError):
                 dispatch_user_sync(user.id, force_sync=True)
             messages.success(self.request, "Profile saved. Your coding profiles are being synced.")
         else:
